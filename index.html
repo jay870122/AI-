@@ -22,12 +22,10 @@
         .cursor-pointer { cursor: pointer; }
         /* 文字斷行修正 */
         .break-words { word-wrap: break-word; word-break: break-word; }
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        /* 刪除按鈕樣式 */
+        .delete-btn { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 10; transition: transform 0.1s; }
+        .delete-btn:active { transform: scale(0.9); }
     </style>
 </head>
 <body class="flex flex-col">
@@ -70,9 +68,9 @@
         </div>
 
         <div id="previewSection" class="hidden space-y-4">
-            <div class="bg-gray-100 rounded-xl p-2">
-                <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x"></div>
-                <p class="text-xs text-center text-gray-400 mt-1">點擊圖片可放大</p>
+            <div class="bg-gray-100 rounded-xl p-2 relative">
+                <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x min-h-[128px]"></div>
+                <p class="text-xs text-center text-gray-400 mt-1">點擊圖片可放大，點擊紅色叉叉可刪除</p>
             </div>
             
             <div class="flex flex-col gap-2">
@@ -221,6 +219,7 @@
             });
             
             if (sectionName === 'home') {
+                // 根據是否有照片決定顯示哪個區塊
                 if (currentBase64Array.length > 0) document.getElementById('previewSection').classList.remove('hidden');
                 else document.getElementById('uploadSection').classList.remove('hidden');
             } else if (sectionName === 'history') {
@@ -232,6 +231,55 @@
                 const loader = document.getElementById('loadingSection');
                 loader.classList.remove('hidden');
                 loader.style.display = 'flex'; 
+            }
+        }
+
+        // ⭐ 新增：重新繪製預覽區 (包含刪除按鈕)
+        window.renderPreview = function() {
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = ''; // 清空容器
+
+            if (currentBase64Array.length === 0) {
+                showSection('home'); // 如果沒照片了，回到首頁
+                return;
+            }
+
+            currentBase64Array.forEach((base64, index) => {
+                const div = document.createElement('div');
+                div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200 group";
+                
+                // 圖片本體
+                div.innerHTML = `<img src="${base64}" class="w-full h-full object-cover cursor-pointer" onclick="window.openImageModal(this.src)">`;
+                
+                // 刪除按鈕 (左上角紅色叉叉)
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "delete-btn";
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.onclick = function(e) {
+                    e.stopPropagation(); // 防止觸發圖片放大
+                    window.deleteImage(index);
+                };
+                
+                // 編號 Badge (右上角)
+                const badge = document.createElement('div');
+                badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
+                badge.innerText = index + 1;
+                
+                div.appendChild(deleteBtn);
+                div.appendChild(badge);
+                container.appendChild(div);
+            });
+            
+            // 捲動到最右邊
+            setTimeout(() => { container.scrollLeft = container.scrollWidth; }, 100);
+            showSection('home'); // 確保顯示預覽區
+        }
+
+        // ⭐ 新增：刪除指定索引的圖片
+        window.deleteImage = function(index) {
+            if (confirm("確定要刪除這張照片嗎？")) {
+                currentBase64Array.splice(index, 1); // 從陣列中移除
+                renderPreview(); // 重新繪製畫面
             }
         }
 
@@ -284,6 +332,7 @@
             if (el2) el2.innerText = window.userId;
         }
 
+        // ⚠️ 修改：handleFileSelect 現在只負責讀取檔案，然後呼叫 renderPreview
         window.handleFileSelect = async function(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
@@ -311,22 +360,14 @@
             });
 
             const newImages = await Promise.all(promises);
-            const startIndex = currentBase64Array.length;
+            // 將新照片加入陣列
             currentBase64Array = currentBase64Array.concat(newImages);
-
-            newImages.forEach((base64, index) => {
-                const div = document.createElement('div');
-                div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200";
-                div.innerHTML = `<img src="${base64}" class="w-full h-full object-cover cursor-pointer" onclick="window.openImageModal(this.src)">`;
-                const badge = document.createElement('div');
-                badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
-                badge.innerText = startIndex + index + 1;
-                div.appendChild(badge);
-                document.getElementById('previewContainer').appendChild(div);
-            });
             
+            // 清空 input 防止重複選擇相同檔案沒反應
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
-            showSection('home');
+            
+            // 重新繪製預覽區
+            renderPreview();
         }
 
         window.resetApp = function() {
@@ -458,7 +499,7 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
-                window.history.pushState({view: 'result'}, '', '#result');
+                history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
             }
