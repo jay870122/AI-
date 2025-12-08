@@ -171,32 +171,18 @@
 
     <script>
         // ============================================
-        // ⚠️ 關鍵：請將這裡換成您的 GAS 網頁應用程式網址 (結尾 /exec)
+        // ⚠️ 請修改這裡：填入您的 GAS 網址 (結尾需為 /exec)
         // ============================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/您的-DEPLOYMENT-ID/exec"; 
 
+        // 全域變數宣告
         let currentBase64Array = []; 
         let loadingInterval = null;
         let currentProductContext = {}; 
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
         
-        // 網址參數解析
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlUserId = urlParams.get('uid');
-
-        let userId;
-        let shouldSync = false;
-
-        if (urlUserId && urlUserId.trim() !== "") {
-            userId = urlUserId.replace(/[<>"'/\\`]/g, '');
-            localStorage.setItem(USER_ID_KEY, userId);
-            shouldSync = true;
-        } else {
-            userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
-            localStorage.setItem(USER_ID_KEY, userId);
-        }
-        
+        // 取得 DOM 元素 (確保全域可用)
         const uploadSection = document.getElementById('uploadSection');
         const previewSection = document.getElementById('previewSection');
         const previewContainer = document.getElementById('previewContainer');
@@ -219,9 +205,25 @@
         
         const loadingSteps = ["處理多張影像...", "呼叫 AI 大腦...", "綜合分析成分...", "正在存入您的專屬雲端..."];
 
+        // 初始化使用者 ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUserId = urlParams.get('uid');
+        let userId;
+        let shouldSync = false;
+
+        if (urlUserId && urlUserId.trim() !== "") {
+            userId = urlUserId.replace(/[<>"'/\\`]/g, '');
+            localStorage.setItem(USER_ID_KEY, userId);
+            shouldSync = true;
+        } else {
+            userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
+            localStorage.setItem(USER_ID_KEY, userId);
+        }
+
         updateUserInfoDisplay();
         if (shouldSync) setTimeout(syncHistoryFromServer, 500);
 
+        // 處理上一頁/下一頁
         window.addEventListener('popstate', function(event) {
             if (event.state && event.state.view === 'history') {
                 showHistory(false); 
@@ -235,7 +237,7 @@
         });
 
         // ============================================
-        //  API 呼叫函式 (已確認修復)
+        //  API 呼叫函式
         // ============================================
         async function callGAS(action, payload) {
             if(!GAS_API_URL || GAS_API_URL.includes("您的-DEPLOYMENT-ID")) {
@@ -252,9 +254,7 @@
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',  
                 body: body,      
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8", 
-                },
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
             });
 
             const json = await response.json();
@@ -263,7 +263,7 @@
         }
 
         // ============================================
-        //  邏輯函式
+        //  核心功能函式
         // ============================================
 
         function updateUserInfoDisplay() {
@@ -308,14 +308,14 @@
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200";
                 
-                // ⚠️ 修正：改用 createElement 避免 onclick 字串錯誤
+                // 修正圖片點擊：加入 cursor-pointer 並改用 this.src
                 const img = document.createElement('img');
                 img.src = base64;
-                img.className = "w-full h-full object-cover cursor-zoom-in";
-                img.onclick = function() { openImageModal(base64); };
+                img.className = "w-full h-full object-cover cursor-pointer"; // 關鍵修改
+                img.onclick = function() { openImageModal(this.src); };     // 關鍵修改
                 
                 const badge = document.createElement('div');
-                badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full";
+                badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none"; // 加入 pointer-events-none 防止擋住點擊
                 badge.innerText = startIndex + index + 1;
                 
                 div.appendChild(img);
@@ -324,7 +324,6 @@
             });
             
             setTimeout(() => { previewContainer.scrollLeft = previewContainer.scrollWidth; }, 100);
-            
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
 
             historySection.classList.add('hidden');
@@ -437,11 +436,11 @@
                         div.className = "w-64 h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm snap-center relative bg-white flex-shrink-0";
                     }
                     
-                    // ⚠️ 修正：改用 createElement 避免 onclick 字串錯誤
+                    // 修正圖片點擊：加入 cursor-pointer 並改用 this.src
                     const img = document.createElement('img');
                     img.src = src;
-                    img.className = "w-full h-full object-cover cursor-zoom-in";
-                    img.onclick = function() { openImageModal(src); };
+                    img.className = "w-full h-full object-cover cursor-pointer";
+                    img.onclick = function() { openImageModal(this.src); };
                     
                     div.appendChild(img);
                     
@@ -606,8 +605,29 @@
             alert("連結已複製！\n您可以將此連結傳給他人，對方開啟後將會自動登入此帳號。");
         }
 
-        function openImageModal(src) { modalImage.src = src; imageModal.classList.remove('hidden'); requestAnimationFrame(() => { imageModal.classList.remove('opacity-0'); modalImage.classList.remove('scale-95'); modalImage.classList.add('scale-100'); }); document.body.style.overflow = 'hidden'; }
-        function closeImageModal() { imageModal.classList.add('opacity-0'); modalImage.classList.remove('scale-100'); modalImage.classList.add('scale-95'); setTimeout(() => { imageModal.classList.add('hidden'); modalImage.src = ''; document.body.style.overflow = ''; }, 200); }
+        function openImageModal(src) { 
+            modalImage.src = src; 
+            imageModal.classList.remove('hidden'); 
+            // 延遲一點點再加動畫，確保 CSS transition 運作
+            requestAnimationFrame(() => { 
+                imageModal.classList.remove('opacity-0'); 
+                modalImage.classList.remove('scale-95'); 
+                modalImage.classList.add('scale-100'); 
+            }); 
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeImageModal() { 
+            imageModal.classList.add('opacity-0'); 
+            modalImage.classList.remove('scale-100'); 
+            modalImage.classList.add('scale-95'); 
+            setTimeout(() => { 
+                imageModal.classList.add('hidden'); 
+                modalImage.src = ''; 
+                document.body.style.overflow = ''; 
+            }, 200); 
+        }
+
         function showInstallPrompt() {
             const ua = navigator.userAgent.toLowerCase();
             const isIOS = /iphone|ipad|ipod/.test(ua); const isAndroid = /android/.test(ua);
@@ -618,5 +638,3 @@
         }
         function closeInstallModal() { installModal.classList.add('opacity-0'); setTimeout(() => { installModal.classList.add('hidden'); document.getElementById('iosInstall').classList.add('hidden'); document.getElementById('androidInstall').classList.add('hidden'); document.getElementById('pcInstall').classList.add('hidden'); }, 200); }
     </script>
-</body>
-</html>
