@@ -225,12 +225,13 @@
             }
         });
 
-        // ============================================
-        //  API 呼叫函式 (取代 google.script.run)
+// ============================================
+        //  API 呼叫函式 (請確保這段程式碼完全正確)
         // ============================================
         async function callGAS(action, payload) {
-            if(GAS_API_URL.includes("https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec")) {
-                alert("請先在程式碼中設定正確的 GAS_API_URL！");
+            // 檢查是否已設定網址
+            if(!GAS_API_URL || GAS_API_URL.includes("https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec")) {
+                alert("請先修改 index.html 中的 GAS_API_URL 為您自己的 GAS 部署網址！");
                 throw new Error("API URL not set");
             }
 
@@ -241,6 +242,7 @@
             });
 
             // 使用 POST 發送純文字 (text/plain) 以避免 CORS Preflight 問題
+            // ⚠️ 錯誤通常發生在下面這行：一定要有 await，且函式開頭要有 async
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: body,
@@ -249,7 +251,7 @@
                 },
             });
 
-            const json = awaFGAit response.json();
+            const json = await response.json();
             if (json.error) throw new Error(json.error);
             return json;
         }
