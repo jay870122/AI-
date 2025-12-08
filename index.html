@@ -236,12 +236,13 @@
             }
         });
 
-        // ============================================
-        //  API 呼叫函式 (已完整修復語法錯誤)
+// ============================================
+        //  API 呼叫函式 (請用這段覆蓋舊的，確保逗號正確)
         // ============================================
         async function callGAS(action, payload) {
-            if(!GAS_API_URL || GAS_API_URL.includes("您的-DEPLOYMENT-ID")) {
-                alert("請先在程式碼中設定正確的 GAS_API_URL！");
+            // 1. 檢查網址設定
+            if(!GAS_API_URL || GAS_API_URL.includes("你的-DEPLOYMENT-ID")) {
+                alert("請先修改 index.html 上方的 GAS_API_URL 為您自己的網址！");
                 throw new Error("API URL not set");
             }
 
@@ -251,13 +252,13 @@
                 ...payload
             });
 
-            // 使用 POST 發送純文字 (text/plain) 以避免 CORS Preflight 問題
+            // 2. 發送請求 (⚠️ 請勿修改下方 fetch 內的程式碼)
             const response = await fetch(GAS_API_URL, {
-                method: 'POST',  // 逗號 ✅
-                body: body,      // 逗號 ✅
+                method: 'POST',  // 👈 這裡要有逗號
+                body: body,      // 👈 這裡要有逗號
                 headers: {
                     "Content-Type": "text/plain;charset=utf-8", 
-                },               // 逗號 ✅
+                },
             });
 
             const json = await response.json();
