@@ -249,7 +249,6 @@
                 ...payload
             });
 
-            // POST + text/plain 避免 CORS preflight
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',  
                 body: body,      
@@ -308,10 +307,18 @@
             newImages.forEach((base64, index) => {
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200";
-                div.innerHTML = '<img src="' + base64 + '" class="w-full h-full object-cover" onclick="openImageModal(\\'' + base64 + '\\')">';
+                
+                // ⚠️ 修正：改用 createElement 避免 onclick 字串錯誤
+                const img = document.createElement('img');
+                img.src = base64;
+                img.className = "w-full h-full object-cover cursor-zoom-in";
+                img.onclick = function() { openImageModal(base64); };
+                
                 const badge = document.createElement('div');
                 badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full";
                 badge.innerText = startIndex + index + 1;
+                
+                div.appendChild(img);
                 div.appendChild(badge);
                 previewContainer.appendChild(div);
             });
@@ -429,7 +436,14 @@
                     } else {
                         div.className = "w-64 h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm snap-center relative bg-white flex-shrink-0";
                     }
-                    div.innerHTML = '<img src="' + src + '" class="w-full h-full object-cover cursor-zoom-in" onclick="openImageModal(\\'' + src + '\\')">';
+                    
+                    // ⚠️ 修正：改用 createElement 避免 onclick 字串錯誤
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.className = "w-full h-full object-cover cursor-zoom-in";
+                    img.onclick = function() { openImageModal(src); };
+                    
+                    div.appendChild(img);
                     
                     if (images.length > 1) {
                         div.innerHTML += '<div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full pointer-events-none">' + (index + 1) + '/' + images.length + '</div>';
