@@ -207,7 +207,7 @@
         const USER_ID_KEY = 'ai_product_user_id';
         window.userId = ''; 
         
-        // ⭐ 分頁變數
+        // 分頁變數
         let currentPage = 1;
         const itemsPerPage = 10;
 
@@ -225,17 +225,39 @@
             
             updateUserInfoDisplay();
             
+            // ⭐ 狀態恢復邏輯：根據網址 Hash 決定顯示哪個畫面
+            if (window.location.hash === '#history') {
+                showSection('history');
+            } else if (window.location.hash === '#result') {
+                // 如果在結果頁重整，因為資料已清空，強制回首頁比較安全
+                showSection('home'); 
+                history.replaceState({view: 'home'}, '', '#home');
+            } else {
+                showSection('home');
+            }
+
+            // 處理瀏覽器上下頁按鈕
             window.onpopstate = function(event) {
                 if (event.state) {
                     if (event.state.view === 'history') showSection('history');
                     else if (event.state.view === 'home') showSection('home');
-                    else if (event.state.view === 'result') showSection('result');
+                    else if (event.state.view === 'result') {
+                        // 檢查是否有資料顯示，沒有就回首頁
+                        const resSection = document.getElementById('resultSection');
+                        const hasContent = document.getElementById('resName').innerText !== "";
+                        if (hasContent) {
+                            showSection('result');
+                        } else {
+                            showSection('home');
+                        }
+                    }
                 } else {
-                    showSection('home');
+                    // Fallback
+                    const hash = window.location.hash;
+                    if(hash === '#history') showSection('history');
+                    else showSection('home');
                 }
             };
-            
-            history.replaceState({view: 'home'}, '', window.location.pathname);
         });
 
         function showSection(sectionName) {
@@ -253,7 +275,7 @@
                 else document.getElementById('uploadSection').classList.remove('hidden');
             } else if (sectionName === 'history') {
                 document.getElementById('historySection').classList.remove('hidden');
-                renderHistoryList(); // 預設載入目前頁數
+                renderHistoryList(); 
             } else if (sectionName === 'result') {
                 document.getElementById('resultSection').classList.remove('hidden');
             } else if (sectionName === 'loading') {
@@ -378,14 +400,13 @@
             currentBase64Array = []; 
             document.getElementById('previewContainer').innerHTML = ''; 
             if (loadingInterval) clearInterval(loadingInterval);
-            history.pushState({view: 'home'}, '', '#home');
+            history.pushState({view: 'home'}, '', '#home'); // 這裡也加上 hash
             showSection('home');
             window.scrollTo(0, 0);
         }
 
         window.navigateToHistory = function() { 
-            // 每次進入歷史紀錄，不強制重設頁碼，保留使用者閱讀進度
-            history.pushState({view: 'history'}, '', '#history');
+            history.pushState({view: 'history'}, '', '#history'); // 這裡也加上 hash
             showSection('history');
         }
 
@@ -517,12 +538,10 @@
                 explanation: data.explanation, 
                 imageUrls: data.imageUrls || [data.imageUrl] 
             });
-            // 雲端可以存很多，本地端也放寬限制，例如 50 筆
             if (savedHistory.length > 50) savedHistory.pop();
             localStorage.setItem(STORAGE_KEY, JSON.stringify(savedHistory));
         }
 
-        // ⭐ 分頁核心邏輯
         window.renderHistoryList = function() {
             const list = document.getElementById('historyList');
             const paginationControls = document.getElementById('paginationControls');
@@ -534,7 +553,6 @@
                 return;
             }
 
-            // 計算分頁
             const totalPages = Math.ceil(savedHistory.length / itemsPerPage);
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
@@ -544,7 +562,7 @@
             const pageItems = savedHistory.slice(start, end);
 
             list.innerHTML = pageItems.map((item, idx) => {
-                const realIdx = start + idx; // 計算真實索引
+                const realIdx = start + idx;
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
                 return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer hover:bg-gray-50 transition" onclick="window.viewHistoryItem(${realIdx})">
@@ -556,7 +574,6 @@
                 </div>`;
             }).join('');
 
-            // 更新分頁按鈕
             if (totalPages > 1) {
                 paginationControls.classList.remove('hidden');
                 document.getElementById('pageIndicator').innerText = `${currentPage} / ${totalPages}`;
@@ -567,11 +584,9 @@
             }
         }
 
-        // ⭐ 換頁函式
         window.changePage = function(delta) {
             currentPage += delta;
             renderHistoryList();
-            // 換頁後回到列表頂部
             document.getElementById('historySection').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -579,7 +594,7 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
-                window.history.pushState({view: 'result'}, '', '#result');
+                history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
             }
@@ -595,7 +610,6 @@
                 const serverHistory = await callGAS('getHistory', {});
                 if (serverHistory && serverHistory.length > 0) {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory));
-                    // 同步後重置回第一頁並刷新
                     currentPage = 1; 
                     if (!document.getElementById('historySection').classList.contains('hidden')) { renderHistoryList(); }
                 }
@@ -617,7 +631,7 @@
                         const serverHistory = await callGAS('getHistory', {});
                         if (serverHistory && serverHistory.length > 0) { 
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory)); 
-                            currentPage = 1; // 切換帳號後重置頁碼
+                            currentPage = 1; 
                             renderHistoryList(); 
                             alert("同步成功！已載入 " + serverHistory.length + " 筆紀錄。"); 
                         } else { 
