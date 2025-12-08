@@ -29,18 +29,18 @@
         .delete-btn { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 10; transition: transform 0.1s; }
         .delete-btn:active { transform: scale(0.9); }
         
-        /* 歷史紀錄刪除按鈕 */
+        /* 歷史紀錄刪除按鈕 (灰色圓底) - 修復跑版問題 */
         .history-delete-btn { 
             width: 36px; 
             height: 36px; 
-            background-color: #f3f4f6; 
+            background-color: #f3f4f6; /* 淺灰底 */
             border-radius: 50%; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             color: #9ca3af; 
-            flex-shrink: 0; 
-            margin-left: 8px; 
+            flex-shrink: 0; /* 防止被擠壓 */
+            margin-left: 8px; /* 與文字的距離 */
             transition: all 0.2s; 
         }
         .history-delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
@@ -56,7 +56,7 @@
                 <button onclick="window.navigateToHistory()" class="text-white/90 hover:text-white transition p-1"><i class="fas fa-history text-lg"></i></button>
                 <h1 class="text-xl font-bold">AI 產品拍立解</h1>
             </div>
-            <!-- 回首頁按鈕 -->
+            <!-- ⭐ 回首頁按鈕 -->
             <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition shadow-sm">
                 <i class="fas fa-home"></i> 回首頁
             </button>
@@ -70,6 +70,7 @@
             <div class="mb-6">
                 <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 shadow-sm"><i class="fas fa-camera text-4xl"></i></div>
                 
+                <!-- 標題與解說區塊 -->
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">拍下產品包裝</h2>
                 
                 <div class="bg-gray-50 p-4 rounded-xl text-left border border-gray-100 mb-4">
@@ -134,7 +135,6 @@
 
         <!-- 結果區 (ID: resultSection) -->
         <div id="resultSection" class="hidden space-y-4 pb-10">
-            <!-- 返回按鈕 -->
             <button onclick="window.history.back()" class="mb-3 text-blue-600 font-bold flex items-center"><i class="fas fa-chevron-left mr-1"></i> 返回</button>
             <div id="saveStatusMsg" class="hidden p-3 rounded-lg text-sm mb-4"></div>
             <div id="resultImageContainer" class="hidden mb-4"></div>
@@ -533,7 +533,7 @@
                 container.appendChild(div);
             });
 
-            document.getElementById('chatHistory').innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">有問題歡迎問我！</div></div>';
+            document.getElementById('chatHistory').innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">對這個產品還有疑問嗎？例如成分、熱量或是使用方法？歡迎隨時問我！</div></div>';
             showSection('result');
             window.scrollTo(0, 0);
         }
@@ -608,7 +608,8 @@
                 const realIdx = start + idx;
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
-                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition group" onclick="window.viewHistoryItem(${realIdx})">
+                // ⭐ 修改：卡片容器加上 relative 和 overflow-hidden，確保垃圾桶不會跑出去
+                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition relative overflow-hidden group" onclick="window.viewHistoryItem(${realIdx})">
                     <div class="flex items-center flex-grow min-w-0">
                         <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
                         <div class="flex-grow min-w-0">
@@ -616,6 +617,7 @@
                             <div class="text-xs text-gray-400">${date}</div>
                         </div>
                     </div>
+                    <!-- 按鈕改為 Flex 佈局，不再 Absolute -->
                     <button onclick="window.deleteHistoryItem(${realIdx}, event)" class="history-delete-btn" title="刪除此紀錄">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -669,7 +671,6 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
-                sessionImages = []; // 歷史紀錄不支援圖片對話 (除非重新下載，這裡簡化處理)
                 window.history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
