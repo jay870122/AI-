@@ -30,21 +30,14 @@
         .delete-btn:active { transform: scale(0.9); }
         
         /* 歷史紀錄刪除按鈕 (灰色圓底) */
-        .history-delete-btn { 
-            width: 36px; 
-            height: 36px; 
-            background-color: #f3f4f6; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: #9ca3af; 
-            flex-shrink: 0; 
-            margin-left: 8px; 
-            transition: all 0.2s; 
-        }
+        .history-delete-btn { width: 36px; height: 36px; background-color: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #9ca3af; flex-shrink: 0; margin-left: 8px; transition: all 0.2s; }
         .history-delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
         .history-delete-btn:active { transform: scale(0.9); }
+
+        /* 選取模式樣式 */
+        .select-checkbox { width: 24px; height: 24px; border: 2px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; transition: all 0.2s; flex-shrink: 0; }
+        .selected .select-checkbox { background-color: #3b82f6; border-color: #3b82f6; color: white; }
+        .selected { background-color: #eff6ff !important; border-color: #bfdbfe !important; }
     </style>
 </head>
 <body class="flex flex-col">
@@ -70,7 +63,6 @@
             <div class="mb-6">
                 <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 shadow-sm"><i class="fas fa-camera text-4xl"></i></div>
                 
-                <!-- 標題與解說區塊 -->
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">拍下產品包裝</h2>
                 
                 <div class="bg-gray-50 p-4 rounded-xl text-left border border-gray-100 mb-4">
@@ -168,11 +160,22 @@
         </div>
 
         <!-- 歷史紀錄 (ID: historySection) -->
-        <div id="historySection" class="hidden animate-fade-in">
+        <div id="historySection" class="hidden animate-fade-in relative">
             <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
-                <h2 class="text-lg font-bold text-gray-800">歷史紀錄</h2>
-                <button onclick="window.clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded">清空全部</button>
+                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    歷史紀錄
+                    <!-- ⭐ 批量編輯按鈕 -->
+                    <button id="editModeBtn" onclick="window.toggleEditMode()" class="text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200 transition">
+                        <i class="fas fa-edit"></i> 編輯
+                    </button>
+                </h2>
+                <!-- 取消編輯按鈕 (預設隱藏) -->
+                <button id="cancelEditBtn" onclick="window.toggleEditMode()" class="hidden text-sm text-blue-600 font-bold px-2 py-1">完成</button>
+                
+                <!-- 清空全部按鈕 (編輯模式下隱藏) -->
+                <button id="clearAllBtn" onclick="window.clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded">清空全部</button>
             </div>
+            
             <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-100">
                 <div class="flex justify-between items-center mb-2">
                     <div class="text-blue-800 overflow-hidden">ID: <span id="displayUserId" class="font-mono font-bold">...</span></div>
@@ -184,16 +187,24 @@
             </div>
             
             <!-- 歷史紀錄列表 -->
-            <div id="historyList" class="space-y-3 pb-4"></div>
+            <div id="historyList" class="space-y-3 pb-20"></div>
             
             <!-- 分頁導航 -->
-            <div id="paginationControls" class="hidden flex justify-center items-center gap-4 mt-2 pb-10">
+            <div id="paginationControls" class="hidden flex justify-center items-center gap-4 mt-2 pb-24">
                 <button id="prevPageBtn" onclick="window.changePage(-1)" class="bg-white border border-gray-300 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-chevron-left"></i> 上一頁
                 </button>
                 <span id="pageIndicator" class="text-sm text-gray-600 font-mono">1</span>
                 <button id="nextPageBtn" onclick="window.changePage(1)" class="bg-white border border-gray-300 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                     下一頁 <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- ⭐ 批量刪除浮動工具列 -->
+            <div id="batchDeleteBar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white shadow-2xl rounded-full px-6 py-3 border border-gray-200 flex items-center gap-4 z-50 animate-bounce-in">
+                <span class="text-gray-700 text-sm font-bold">已選 <span id="selectedCount">0</span> 筆</span>
+                <button onclick="window.batchDelete()" class="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow hover:bg-red-600 transition active:scale-95">
+                    <i class="fas fa-trash-alt"></i> 刪除
                 </button>
             </div>
 
@@ -237,7 +248,7 @@
         let loadingInterval = null;
         let currentProductContext = {}; 
         let sessionImages = []; 
-        let chatMemory = []; // ⭐ 新增：對話記憶陣列
+        let chatMemory = [];
         
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
@@ -245,6 +256,10 @@
         
         let currentPage = 1;
         const itemsPerPage = 10;
+        
+        // ⭐ 編輯模式狀態
+        let isEditMode = false;
+        let selectedIndexes = new Set(); // 儲存被選取的「全域索引」
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -312,6 +327,105 @@
             }
         }
 
+        // ⭐ 批量編輯功能函式
+        window.toggleEditMode = function() {
+            isEditMode = !isEditMode;
+            selectedIndexes.clear(); // 切換模式時清空選取
+            
+            // UI 切換
+            const editBtn = document.getElementById('editModeBtn');
+            const cancelBtn = document.getElementById('cancelEditBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const batchBar = document.getElementById('batchDeleteBar');
+            
+            if (isEditMode) {
+                editBtn.classList.add('hidden');
+                cancelBtn.classList.remove('hidden');
+                clearAllBtn.classList.add('hidden');
+                batchBar.classList.remove('hidden');
+            } else {
+                editBtn.classList.remove('hidden');
+                cancelBtn.classList.add('hidden');
+                clearAllBtn.classList.remove('hidden');
+                batchBar.classList.add('hidden');
+            }
+            
+            updateBatchDeleteUI();
+            renderHistoryList(); // 重新渲染列表以顯示 Checkbox
+        }
+
+        window.toggleItemSelection = function(index) {
+            if (selectedIndexes.has(index)) {
+                selectedIndexes.delete(index);
+            } else {
+                selectedIndexes.add(index);
+            }
+            updateBatchDeleteUI();
+            renderHistoryList(); // 重新渲染以更新選取狀態
+        }
+
+        window.updateBatchDeleteUI = function() {
+            const count = selectedIndexes.size;
+            document.getElementById('selectedCount').innerText = count;
+            const batchBar = document.getElementById('batchDeleteBar');
+            
+            // 只有在編輯模式且有選取時才顯示按鈕，但為了體驗，我們可以一直顯示 Bar，只 disable 按鈕
+            if (isEditMode) {
+                batchBar.classList.remove('hidden');
+            } else {
+                batchBar.classList.add('hidden');
+            }
+        }
+
+        window.batchDelete = async function() {
+            if (selectedIndexes.size === 0) return;
+            if (!confirm(`確定要刪除選取的 ${selectedIndexes.size} 筆紀錄嗎？(包含雲端檔案)`)) return;
+
+            const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            
+            // 收集要刪除的 timestamps
+            const timestampsToDelete = [];
+            // 將 Set 轉為 Array 並由大到小排序，方便後續 splice
+            const indexesToDelete = Array.from(selectedIndexes).sort((a, b) => b - a);
+
+            indexesToDelete.forEach(idx => {
+                if (savedHistory[idx]) {
+                    timestampsToDelete.push(savedHistory[idx].timestamp);
+                }
+            });
+
+            // 顯示 Loading 狀態
+            const batchBar = document.getElementById('batchDeleteBar');
+            const originalContent = batchBar.innerHTML;
+            batchBar.innerHTML = '<span class="text-gray-700 font-bold"><i class="fas fa-spinner fa-spin"></i> 正在刪除...</span>';
+
+            // 呼叫雲端刪除
+            try {
+                await callGAS('delete', { timestamp: timestampsToDelete }); // 傳送 Array
+            } catch (e) {
+                console.error("雲端批量刪除失敗", e);
+                // 即使雲端失敗，本地也要刪除
+            }
+
+            // 本地刪除 (從後面開始刪，以免索引跑掉)
+            indexesToDelete.forEach(idx => {
+                savedHistory.splice(idx, 1);
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedHistory));
+
+            // 恢復 UI
+            batchBar.innerHTML = originalContent;
+            window.toggleEditMode(); // 退出編輯模式
+            
+            // 如果當前頁面空了，往回跳
+            const totalPages = Math.ceil(savedHistory.length / itemsPerPage);
+            if (currentPage > totalPages && currentPage > 1) currentPage--;
+            
+            renderHistoryList();
+        }
+
+        // ============================================
+        
         window.renderPreview = function() {
             const container = document.getElementById('previewContainer');
             container.innerHTML = ''; 
@@ -426,7 +540,7 @@
         window.resetApp = function() {
             currentBase64Array = []; 
             sessionImages = []; 
-            chatMemory = []; // ⭐ 重置對話記憶
+            chatMemory = []; 
             document.getElementById('previewContainer').innerHTML = ''; 
             if (loadingInterval) clearInterval(loadingInterval);
             history.pushState({view: 'home'}, '', '#home');
@@ -471,10 +585,9 @@
             try {
                 const result = await callGAS('analyze', { base64DataList: currentBase64Array.map(b => b.split(',')[1]) });
                 
-                // ⭐ 成功後保存圖片到 session
                 sessionImages = [...currentBase64Array];
                 currentBase64Array = [];
-                chatMemory = []; // ⭐ 新分析時，清空舊對話記憶
+                chatMemory = []; 
                 document.getElementById('previewContainer').innerHTML = '';
                 document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
 
@@ -535,7 +648,6 @@
                 container.appendChild(div);
             });
 
-            // ⭐ 優化起始問候語
             document.getElementById('chatHistory').innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">對這個產品還有疑問嗎？例如成分、熱量或是使用方法？歡迎隨時問我！</div></div>';
             showSection('result');
             window.scrollTo(0, 0);
@@ -557,10 +669,8 @@
             chat.innerHTML += `<div id="${loadId}" class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-400">...</div></div>`;
             chat.scrollTop = chat.scrollHeight;
 
-            // ⭐ 恢復圖片傳送：AI 可看到圖片
             const imgsToSend = (sessionImages.length > 0) ? sessionImages.map(b => b.split(',')[1]) : null;
             
-            // ⭐ 組合對話記憶
             let fullPrompt = q;
             if (chatMemory.length > 0) {
                 const historyText = chatMemory.map(item => `問：${item.q}\n答：${item.a}`).join('\n\n');
@@ -569,7 +679,7 @@
 
             try {
                 const res = await callGAS('chat', { 
-                    question: fullPrompt, // 傳送含記憶的 prompt
+                    question: fullPrompt, 
                     productContext: currentProductContext, 
                     base64DataList: imgsToSend 
                 });
@@ -577,9 +687,7 @@
                 document.getElementById(loadId).remove();
                 chat.innerHTML += `<div class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-800">${res.reply}</div></div>`;
                 
-                // ⭐ 儲存記憶
                 chatMemory.push({ q: q, a: res.reply });
-                // 限制記憶長度，避免 Token 爆炸 (存最近 5 組)
                 if (chatMemory.length > 5) chatMemory.shift();
 
             } catch (e) {
@@ -602,6 +710,7 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(savedHistory));
         }
 
+        // ⭐ 歷史紀錄渲染 (支援編輯模式)
         window.renderHistoryList = function() {
             const list = document.getElementById('historyList');
             const paginationControls = document.getElementById('paginationControls');
@@ -625,18 +734,27 @@
                 const realIdx = start + idx;
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
-                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition group" onclick="window.viewHistoryItem(${realIdx})">
+                
+                // 判斷是否為編輯模式
+                const isSelected = selectedIndexes.has(realIdx);
+                const selectClass = isSelected ? 'selected' : '';
+                
+                // 一般模式的按鈕 (垃圾桶)
+                const deleteBtnHtml = `<button onclick="window.deleteHistoryItem(${realIdx}, event)" class="history-delete-btn" title="刪除此紀錄"><i class="fas fa-trash-alt"></i></button>`;
+                
+                // 編輯模式的 Checkbox
+                const checkboxHtml = `<div class="select-checkbox"><i class="fas fa-check text-xs ${isSelected ? '' : 'hidden'}"></i></div>`;
+
+                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition group ${selectClass}" onclick="${isEditMode ? `window.toggleItemSelection(${realIdx})` : `window.viewHistoryItem(${realIdx})`}">
                     <div class="flex items-center flex-grow min-w-0">
+                        ${isEditMode ? checkboxHtml : ''}
                         <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
                         <div class="flex-grow min-w-0">
                             <div class="font-bold text-gray-800 line-clamp-2 break-words mb-1">${item.productName}</div>
                             <div class="text-xs text-gray-400">${date}</div>
                         </div>
                     </div>
-                    <!-- 按鈕改為 Flex 佈局，不再 Absolute -->
-                    <button onclick="window.deleteHistoryItem(${realIdx}, event)" class="history-delete-btn" title="刪除此紀錄">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    ${!isEditMode ? deleteBtnHtml : ''}
                 </div>`;
             }).join('');
 
@@ -650,6 +768,7 @@
             }
         }
 
+        // 單筆刪除 (保留舊功能)
         window.deleteHistoryItem = async function(index, event) {
             event.stopPropagation();
             if(!confirm("確定要永久刪除這筆紀錄嗎？(包含雲端檔案)")) return;
@@ -658,15 +777,11 @@
             const item = savedHistory[index];
             
             const btn = event.currentTarget;
-            const originalIcon = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin text-gray-400"></i>';
             btn.disabled = true;
 
-            try {
-                await callGAS('delete', { timestamp: item.timestamp });
-            } catch(e) {
-                console.error("雲端刪除失敗", e);
-            }
+            try { await callGAS('delete', { timestamp: item.timestamp }); } 
+            catch(e) { console.error("雲端刪除失敗", e); }
 
             savedHistory.splice(index, 1);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(savedHistory));
