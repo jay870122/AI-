@@ -5,24 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 產品拍立解</title>
     
-    <link rel="icon" type="image/png" href="https://i.meee.com.tw/64rKjML.png">
-    <link rel="apple-touch-icon" href="https://i.meee.com.tw/64rKjML.png">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3687/3687412.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        html { height: auto; min-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: manipulation; }
-        body { font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; min-height: 100vh; overflow-y: visible; overflow-x: hidden; position: relative; }
+        html { height: auto; min-height: 100%; overflow-y: auto; touch-action: manipulation; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; min-height: 100vh; position: relative; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         .chat-loader { width: 8px; height: 8px; background-color: #9ca3af; border-radius: 50%; animation: chat-dot 1.4s infinite ease-in-out both; display: inline-block; margin: 0 2px; }
         .chat-loader:nth-child(1) { animation-delay: -0.32s; }
         .chat-loader:nth-child(2) { animation-delay: -0.16s; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes chat-dot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-        .history-card:active { transform: scale(0.98); background-color: #f9fafb; }
-        .cursor-zoom-in { cursor: zoom-in; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 強制顯示樣式，確保 Lightbox 正常運作 */
+        #imageModal { z-index: 9999 !important; }
+        .cursor-pointer { cursor: pointer; }
     </style>
 </head>
 <body class="flex flex-col">
@@ -69,8 +67,8 @@
         <div id="previewSection" class="hidden space-y-4">
             <div class="bg-gray-100 rounded-xl p-2">
                 <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x">
-                    </div>
-                <p class="text-xs text-center text-gray-400 mt-1"><i class="fas fa-hand-point-up"></i> 左右滑動檢查照片</p>
+                </div>
+                <p class="text-xs text-center text-gray-400 mt-1"><i class="fas fa-hand-point-up"></i> 點擊圖片可放大檢查</p>
             </div>
             
             <div class="flex gap-3">
@@ -150,8 +148,10 @@
         </div>
     </main>
 
-    <div id="imageModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeImageModal()">
-        <button class="absolute top-4 right-4 text-white/80 hover:text-white text-4xl focus:outline-none w-10 h-10 flex items-center justify-center bg-black/50 rounded-full">&times;</button>
+    <div id="imageModal" class="fixed inset-0 hidden bg-black/95 flex items-center justify-center p-2 backdrop-blur-sm transition-opacity opacity-0" onclick="closeImageModal()">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 z-[10000] text-white bg-gray-800/50 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
         <img id="modalImage" class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl scale-95 transition-transform duration-200" src="" alt="Full size" onclick="event.stopPropagation()">
     </div>
     
@@ -171,18 +171,33 @@
 
     <script>
         // ============================================
-        // ⚠️ 請修改這裡：填入您的 GAS 網址 (結尾需為 /exec)
+        // ⚠️ 關鍵：請將這裡換成您的 GAS 網頁應用程式網址 (結尾 /exec)
         // ============================================
-        const GAS_API_URL = "https://script.google.com/macros/s/您的-DEPLOYMENT-ID/exec"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec"; 
 
-        // 全域變數宣告
         let currentBase64Array = []; 
         let loadingInterval = null;
         let currentProductContext = {}; 
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
         
-        // 取得 DOM 元素 (確保全域可用)
+        // 網址參數解析
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUserId = urlParams.get('uid');
+
+        let userId;
+        let shouldSync = false;
+
+        if (urlUserId && urlUserId.trim() !== "") {
+            userId = urlUserId.replace(/[<>"'/\\`]/g, '');
+            localStorage.setItem(USER_ID_KEY, userId);
+            shouldSync = true;
+        } else {
+            userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
+            localStorage.setItem(USER_ID_KEY, userId);
+        }
+        
+        // DOM Elements
         const uploadSection = document.getElementById('uploadSection');
         const previewSection = document.getElementById('previewSection');
         const previewContainer = document.getElementById('previewContainer');
@@ -205,25 +220,9 @@
         
         const loadingSteps = ["處理多張影像...", "呼叫 AI 大腦...", "綜合分析成分...", "正在存入您的專屬雲端..."];
 
-        // 初始化使用者 ID
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlUserId = urlParams.get('uid');
-        let userId;
-        let shouldSync = false;
-
-        if (urlUserId && urlUserId.trim() !== "") {
-            userId = urlUserId.replace(/[<>"'/\\`]/g, '');
-            localStorage.setItem(USER_ID_KEY, userId);
-            shouldSync = true;
-        } else {
-            userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
-            localStorage.setItem(USER_ID_KEY, userId);
-        }
-
         updateUserInfoDisplay();
         if (shouldSync) setTimeout(syncHistoryFromServer, 500);
 
-        // 處理上一頁/下一頁
         window.addEventListener('popstate', function(event) {
             if (event.state && event.state.view === 'history') {
                 showHistory(false); 
@@ -263,7 +262,7 @@
         }
 
         // ============================================
-        //  核心功能函式
+        //  邏輯函式
         // ============================================
 
         function updateUserInfoDisplay() {
@@ -308,14 +307,16 @@
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200";
                 
-                // 修正圖片點擊：加入 cursor-pointer 並改用 this.src
+                // 修正：使用 addEventListener，保證圖片可點擊放大
                 const img = document.createElement('img');
                 img.src = base64;
-                img.className = "w-full h-full object-cover cursor-pointer"; // 關鍵修改
-                img.onclick = function() { openImageModal(this.src); };     // 關鍵修改
+                img.className = "w-full h-full object-cover cursor-pointer";
+                img.addEventListener('click', function() {
+                    openImageModal(base64);
+                });
                 
                 const badge = document.createElement('div');
-                badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none"; // 加入 pointer-events-none 防止擋住點擊
+                badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
                 badge.innerText = startIndex + index + 1;
                 
                 div.appendChild(img);
@@ -436,11 +437,13 @@
                         div.className = "w-64 h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm snap-center relative bg-white flex-shrink-0";
                     }
                     
-                    // 修正圖片點擊：加入 cursor-pointer 並改用 this.src
+                    // 修正：使用 addEventListener 確保結果頁面的圖片也能點擊
                     const img = document.createElement('img');
                     img.src = src;
                     img.className = "w-full h-full object-cover cursor-pointer";
-                    img.onclick = function() { openImageModal(this.src); };
+                    img.addEventListener('click', function() {
+                        openImageModal(src);
+                    });
                     
                     div.appendChild(img);
                     
@@ -605,25 +608,41 @@
             alert("連結已複製！\n您可以將此連結傳給他人，對方開啟後將會自動登入此帳號。");
         }
 
+        // 修改：使用更穩定的 Lightbox 開啟邏輯
         function openImageModal(src) { 
-            modalImage.src = src; 
-            imageModal.classList.remove('hidden'); 
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            
+            if (!modal || !img) return;
+            
+            img.src = src; 
+            modal.classList.remove('hidden'); 
+            modal.style.display = 'flex'; // 強制使用 Flex 排版
+            
             // 延遲一點點再加動畫，確保 CSS transition 運作
-            requestAnimationFrame(() => { 
-                imageModal.classList.remove('opacity-0'); 
-                modalImage.classList.remove('scale-95'); 
-                modalImage.classList.add('scale-100'); 
-            }); 
+            setTimeout(() => { 
+                modal.classList.remove('opacity-0'); 
+                img.classList.remove('scale-95'); 
+                img.classList.add('scale-100'); 
+            }, 10); 
+            
             document.body.style.overflow = 'hidden'; 
         }
 
         function closeImageModal() { 
-            imageModal.classList.add('opacity-0'); 
-            modalImage.classList.remove('scale-100'); 
-            modalImage.classList.add('scale-95'); 
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            
+            if (!modal || !img) return;
+
+            modal.classList.add('opacity-0'); 
+            img.classList.remove('scale-100'); 
+            img.classList.add('scale-95'); 
+            
             setTimeout(() => { 
-                imageModal.classList.add('hidden'); 
-                modalImage.src = ''; 
+                modal.classList.add('hidden'); 
+                modal.style.display = 'none'; // 隱藏
+                img.src = ''; 
                 document.body.style.overflow = ''; 
             }, 200); 
         }
@@ -638,3 +657,5 @@
         }
         function closeInstallModal() { installModal.classList.add('opacity-0'); setTimeout(() => { installModal.classList.add('hidden'); document.getElementById('iosInstall').classList.add('hidden'); document.getElementById('androidInstall').classList.add('hidden'); document.getElementById('pcInstall').classList.add('hidden'); }, 200); }
     </script>
+</body>
+</html>
