@@ -29,18 +29,18 @@
         .delete-btn { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 10; transition: transform 0.1s; }
         .delete-btn:active { transform: scale(0.9); }
         
-        /* 歷史紀錄刪除按鈕 (灰色圓底) - 修復跑版問題 */
+        /* 歷史紀錄刪除按鈕 (灰色圓底) */
         .history-delete-btn { 
             width: 36px; 
             height: 36px; 
-            background-color: #f3f4f6; /* 淺灰底 */
+            background-color: #f3f4f6; 
             border-radius: 50%; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             color: #9ca3af; 
-            flex-shrink: 0; /* 防止被擠壓 */
-            margin-left: 8px; /* 與文字的距離 */
+            flex-shrink: 0; 
+            margin-left: 8px; 
             transition: all 0.2s; 
         }
         .history-delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
@@ -56,7 +56,7 @@
                 <button onclick="window.navigateToHistory()" class="text-white/90 hover:text-white transition p-1"><i class="fas fa-history text-lg"></i></button>
                 <h1 class="text-xl font-bold">AI 產品拍立解</h1>
             </div>
-            <!-- ⭐ 回首頁按鈕 -->
+            <!-- 回首頁按鈕 -->
             <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition shadow-sm">
                 <i class="fas fa-home"></i> 回首頁
             </button>
@@ -236,7 +236,8 @@
         let currentBase64Array = []; 
         let loadingInterval = null;
         let currentProductContext = {}; 
-        let sessionImages = []; // ⭐ 新增：用於快取本次分析的圖片 (為了聊天和結果顯示)
+        let sessionImages = []; 
+        let chatMemory = []; // ⭐ 新增：對話記憶陣列
         
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
@@ -424,7 +425,8 @@
 
         window.resetApp = function() {
             currentBase64Array = []; 
-            sessionImages = []; // ⭐ 重置時也清空 session
+            sessionImages = []; 
+            chatMemory = []; // ⭐ 重置對話記憶
             document.getElementById('previewContainer').innerHTML = ''; 
             if (loadingInterval) clearInterval(loadingInterval);
             history.pushState({view: 'home'}, '', '#home');
@@ -469,9 +471,10 @@
             try {
                 const result = await callGAS('analyze', { base64DataList: currentBase64Array.map(b => b.split(',')[1]) });
                 
-                // ⭐ 成功後，將圖片轉存到 sessionImages，並清空 currentBase64Array
+                // ⭐ 成功後保存圖片到 session
                 sessionImages = [...currentBase64Array];
                 currentBase64Array = [];
+                chatMemory = []; // ⭐ 新分析時，清空舊對話記憶
                 document.getElementById('previewContainer').innerHTML = '';
                 document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
 
@@ -523,7 +526,6 @@
             container.classList.remove('hidden');
             container.className = "flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x mb-4";
             
-            // ⭐ 優先使用回傳的 URL，若無則使用 sessionImages 或 currentBase64Array
             const images = data.imageUrls || (data.imageUrl ? [data.imageUrl] : (sessionImages.length > 0 ? sessionImages : currentBase64Array));
             
             images.forEach((src) => {
@@ -533,6 +535,7 @@
                 container.appendChild(div);
             });
 
+            // ⭐ 優化起始問候語
             document.getElementById('chatHistory').innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">對這個產品還有疑問嗎？例如成分、熱量或是使用方法？歡迎隨時問我！</div></div>';
             showSection('result');
             window.scrollTo(0, 0);
@@ -554,17 +557,31 @@
             chat.innerHTML += `<div id="${loadId}" class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-400">...</div></div>`;
             chat.scrollTop = chat.scrollHeight;
 
-            // ⭐ 使用 sessionImages (剛拍的) 或空值 (歷史紀錄)
+            // ⭐ 恢復圖片傳送：AI 可看到圖片
             const imgsToSend = (sessionImages.length > 0) ? sessionImages.map(b => b.split(',')[1]) : null;
+            
+            // ⭐ 組合對話記憶
+            let fullPrompt = q;
+            if (chatMemory.length > 0) {
+                const historyText = chatMemory.map(item => `問：${item.q}\n答：${item.a}`).join('\n\n');
+                fullPrompt = `這是之前的對話紀錄供參考：\n${historyText}\n\n使用者現在的問題：${q}`;
+            }
 
             try {
                 const res = await callGAS('chat', { 
-                    question: q, 
+                    question: fullPrompt, // 傳送含記憶的 prompt
                     productContext: currentProductContext, 
                     base64DataList: imgsToSend 
                 });
+                
                 document.getElementById(loadId).remove();
                 chat.innerHTML += `<div class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-800">${res.reply}</div></div>`;
+                
+                // ⭐ 儲存記憶
+                chatMemory.push({ q: q, a: res.reply });
+                // 限制記憶長度，避免 Token 爆炸 (存最近 5 組)
+                if (chatMemory.length > 5) chatMemory.shift();
+
             } catch (e) {
                 document.getElementById(loadId).innerText = "錯誤";
             }
@@ -608,8 +625,7 @@
                 const realIdx = start + idx;
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
-                // ⭐ 修改：卡片容器加上 relative 和 overflow-hidden，確保垃圾桶不會跑出去
-                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition relative overflow-hidden group" onclick="window.viewHistoryItem(${realIdx})">
+                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition group" onclick="window.viewHistoryItem(${realIdx})">
                     <div class="flex items-center flex-grow min-w-0">
                         <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
                         <div class="flex-grow min-w-0">
@@ -671,6 +687,8 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
+                sessionImages = []; 
+                chatMemory = []; // 歷史紀錄對話從零開始
                 window.history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
