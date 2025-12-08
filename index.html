@@ -12,11 +12,10 @@
     <style>
         html { height: auto; min-height: 100%; overflow-y: auto; touch-action: manipulation; }
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; min-height: 100vh; position: relative; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         .chat-loader { width: 8px; height: 8px; background-color: #9ca3af; border-radius: 50%; animation: chat-dot 1.4s infinite ease-in-out both; display: inline-block; margin: 0 2px; }
         .chat-loader:nth-child(1) { animation-delay: -0.32s; }
         .chat-loader:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes chat-dot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
         /* 強制 Lightbox 層級最高 */
         #imageModal { z-index: 2147483647 !important; }
         .cursor-pointer { cursor: pointer; }
@@ -90,9 +89,12 @@
             </div>
         </div>
 
-        <div id="loadingSection" class="hidden flex-col items-center justify-center py-10 text-center">
-            <div class="loader mb-4"></div>
-            <p class="text-gray-500 text-sm" id="loadingText">處理中...</p>
+        <div id="loadingSection" class="hidden flex-col items-center justify-center py-10 text-center px-6">
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-3 overflow-hidden shadow-inner">
+                <div id="progressBar" class="bg-blue-600 h-4 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1" id="loadingTitle">AI 正在啟動...</h3>
+            <p class="text-gray-500 text-sm" id="loadingText">準備開始分析...</p>
         </div>
 
         <div id="resultSection" class="hidden space-y-4 pb-10">
@@ -219,7 +221,6 @@
             });
             
             if (sectionName === 'home') {
-                // 根據是否有照片決定顯示哪個區塊
                 if (currentBase64Array.length > 0) document.getElementById('previewSection').classList.remove('hidden');
                 else document.getElementById('uploadSection').classList.remove('hidden');
             } else if (sectionName === 'history') {
@@ -234,13 +235,12 @@
             }
         }
 
-        // ⭐ 新增：重新繪製預覽區 (包含刪除按鈕)
         window.renderPreview = function() {
             const container = document.getElementById('previewContainer');
-            container.innerHTML = ''; // 清空容器
+            container.innerHTML = ''; 
 
             if (currentBase64Array.length === 0) {
-                showSection('home'); // 如果沒照片了，回到首頁
+                showSection('home'); 
                 return;
             }
 
@@ -248,19 +248,16 @@
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200 group";
                 
-                // 圖片本體
                 div.innerHTML = `<img src="${base64}" class="w-full h-full object-cover cursor-pointer" onclick="window.openImageModal(this.src)">`;
                 
-                // 刪除按鈕 (左上角紅色叉叉)
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = "delete-btn";
                 deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
                 deleteBtn.onclick = function(e) {
-                    e.stopPropagation(); // 防止觸發圖片放大
+                    e.stopPropagation(); 
                     window.deleteImage(index);
                 };
                 
-                // 編號 Badge (右上角)
                 const badge = document.createElement('div');
                 badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
                 badge.innerText = index + 1;
@@ -270,16 +267,14 @@
                 container.appendChild(div);
             });
             
-            // 捲動到最右邊
             setTimeout(() => { container.scrollLeft = container.scrollWidth; }, 100);
-            showSection('home'); // 確保顯示預覽區
+            showSection('home'); 
         }
 
-        // ⭐ 新增：刪除指定索引的圖片
         window.deleteImage = function(index) {
             if (confirm("確定要刪除這張照片嗎？")) {
-                currentBase64Array.splice(index, 1); // 從陣列中移除
-                renderPreview(); // 重新繪製畫面
+                currentBase64Array.splice(index, 1); 
+                renderPreview(); 
             }
         }
 
@@ -332,7 +327,6 @@
             if (el2) el2.innerText = window.userId;
         }
 
-        // ⚠️ 修改：handleFileSelect 現在只負責讀取檔案，然後呼叫 renderPreview
         window.handleFileSelect = async function(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
@@ -360,13 +354,8 @@
             });
 
             const newImages = await Promise.all(promises);
-            // 將新照片加入陣列
             currentBase64Array = currentBase64Array.concat(newImages);
-            
-            // 清空 input 防止重複選擇相同檔案沒反應
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
-            
-            // 重新繪製預覽區
             renderPreview();
         }
 
@@ -384,22 +373,61 @@
             showSection('history');
         }
 
+        // ⭐ 進度條邏輯修正
         window.analyzeImage = async function() {
             if (currentBase64Array.length === 0) return;
             showSection('loading');
-            let step = 0;
-            const steps = ["處理影像...", "AI 分析中...", "翻譯成中文...", "整理結果..."];
+            
+            // 變數初始化
+            const progressBar = document.getElementById('progressBar');
+            const loadingTitle = document.getElementById('loadingTitle');
+            const loadingText = document.getElementById('loadingText');
+            let progress = 0;
+            progressBar.style.width = '0%';
+            
+            // 模擬進度條 (非線性增長)
+            if (loadingInterval) clearInterval(loadingInterval);
             loadingInterval = setInterval(() => {
-                document.getElementById('loadingText').innerText = steps[step % steps.length];
-                step++;
-            }, 1500);
+                // 每次增加一點點，但越接近 90% 越慢，永遠不到 100% 直到回應
+                if (progress < 90) {
+                    let increment = (95 - progress) / 30; 
+                    if (increment < 0.2) increment = 0.2;
+                    progress += increment;
+                }
+                progressBar.style.width = `${progress}%`;
+                
+                // 更新文字提示
+                if (progress < 30) {
+                    loadingTitle.innerText = "正在上傳照片...";
+                    loadingText.innerText = "將您的照片安全傳送至雲端...";
+                } else if (progress < 60) {
+                    loadingTitle.innerText = "AI 正在思考中...";
+                    loadingText.innerText = "辨識包裝特徵、文字與成分...";
+                } else if (progress < 85) {
+                    loadingTitle.innerText = "正在翻譯與撰寫...";
+                    loadingText.innerText = "將複雜資訊轉為繁體中文懶人包...";
+                } else {
+                    loadingTitle.innerText = "即將完成...";
+                    loadingText.innerText = "正在整理最終結果...";
+                }
+            }, 100);
 
             try {
                 const result = await callGAS('analyze', { base64DataList: currentBase64Array.map(b => b.split(',')[1]) });
+                
+                // 成功後瞬間填滿
                 clearInterval(loadingInterval);
-                history.pushState({view: 'result'}, '', '#result');
-                renderResult(result); 
-                saveToHistory(result);
+                progressBar.style.width = '100%';
+                loadingTitle.innerText = "分析完成！";
+                loadingText.innerText = "正在顯示結果...";
+                
+                // 稍微停頓一下讓使用者看到 100%
+                setTimeout(() => {
+                    history.pushState({view: 'result'}, '', '#result');
+                    renderResult(result); 
+                    saveToHistory(result);
+                }, 400);
+
             } catch (error) {
                 clearInterval(loadingInterval);
                 alert("錯誤：" + error.message);
@@ -499,7 +527,7 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
-                history.pushState({view: 'result'}, '', '#result');
+                window.history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
             }
