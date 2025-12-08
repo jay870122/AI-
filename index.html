@@ -444,11 +444,16 @@
             let progress = 0;
             progressBar.style.width = '0%';
             
+            const imageCount = currentBase64Array.length || 1;
+            // 基礎分母：越多張圖，分母越大，進度跑越慢 (預設 80，每多一張加 30)
+            const speedDivisor = 80 + (imageCount * 30); 
+
             if (loadingInterval) clearInterval(loadingInterval);
             loadingInterval = setInterval(() => {
                 if (progress < 90) {
-                    let increment = (95 - progress) / 30; 
-                    if (increment < 0.2) increment = 0.2;
+                    let increment = (95 - progress) / speedDivisor; 
+                    const minInc = 0.05 / imageCount;
+                    if (increment < minInc) increment = minInc;
                     progress += increment;
                 }
                 progressBar.style.width = `${progress}%`;
