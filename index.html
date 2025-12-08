@@ -17,8 +17,8 @@
         .chat-loader:nth-child(1) { animation-delay: -0.32s; }
         .chat-loader:nth-child(2) { animation-delay: -0.16s; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* 確保 Lightbox 的層級最高，並且滑鼠游標正確 */
-        #imageModal { z-index: 2147483647 !important; } 
+        /* 強制 Lightbox 層級最高 */
+        #imageModal { z-index: 2147483647 !important; }
         .cursor-pointer { cursor: pointer; }
     </style>
 </head>
@@ -26,37 +26,35 @@
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <button onclick="showInstallPrompt()" class="text-white/90 hover:text-white transition p-1" title="放到桌面"><i class="fas fa-download text-lg"></i></button>
-                <button onclick="navigateToHistory()" class="text-white/90 hover:text-white transition p-1" title="歷史紀錄"><i class="fas fa-history text-lg"></i></button>
+                <button onclick="window.showInstallPrompt()" class="text-white/90 hover:text-white transition p-1"><i class="fas fa-download text-lg"></i></button>
+                <button onclick="window.navigateToHistory()" class="text-white/90 hover:text-white transition p-1"><i class="fas fa-history text-lg"></i></button>
                 <h1 class="text-xl font-bold">AI 產品拍立解</h1>
             </div>
-            <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full hover:bg-blue-800 transition"><i class="fas fa-redo"></i> 重來</button>
+            <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full"><i class="fas fa-redo"></i> 重來</button>
         </div>
     </header>
 
     <main class="flex-grow p-4 max-w-md mx-auto w-full pb-20">
         
-        <div id="uploadSection" class="bg-white rounded-2xl shadow-sm p-6 text-center transition-all duration-300">
+        <div id="uploadSection" class="bg-white rounded-2xl shadow-sm p-6 text-center">
             <div class="mb-6">
                 <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><i class="fas fa-camera text-4xl"></i></div>
                 <h2 class="text-lg font-bold text-gray-800 mb-2">拍下產品包裝</h2>
                 <p class="text-gray-500 text-sm">多圖問答版<br>拍完一張，可按「加拍」繼續拍下一張！</p>
-                <div class="mt-4 inline-block bg-blue-50 text-blue-600 text-xs px-3 py-1 rounded-full border border-blue-100"><i class="fas fa-user-circle mr-1"></i>目前帳號：<span id="homeUserId" class="font-bold">...</span></div>
+                <div class="mt-4 text-xs text-gray-400">ID: <span id="homeUserId">...</span></div>
             </div>
             
             <div class="flex gap-3 w-full">
                 <label class="flex-1 cursor-pointer">
-                    <div class="bg-blue-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg hover:bg-blue-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-1 h-full">
-                        <i class="fas fa-camera text-2xl"></i>
-                        <span class="text-sm">立即拍照</span>
+                    <div class="bg-blue-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg flex flex-col items-center justify-center gap-1 h-full">
+                        <i class="fas fa-camera text-2xl"></i><span class="text-sm">立即拍照</span>
                     </div>
                     <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="window.handleFileSelect(event)">
                 </label>
 
                 <label class="flex-1 cursor-pointer">
-                    <div class="bg-green-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg hover:bg-green-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-1 h-full">
-                        <i class="fas fa-images text-2xl"></i>
-                        <span class="text-sm">從相簿選</span>
+                    <div class="bg-green-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg flex flex-col items-center justify-center gap-1 h-full">
+                        <i class="fas fa-images text-2xl"></i><span class="text-sm">從相簿選</span>
                     </div>
                     <input type="file" accept="image/*" multiple class="hidden" onchange="window.handleFileSelect(event)">
                 </label>
@@ -65,31 +63,23 @@
 
         <div id="previewSection" class="hidden space-y-4">
             <div class="bg-gray-100 rounded-xl p-2">
-                <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x">
-                </div>
-                <p class="text-xs text-center text-gray-400 mt-1"><i class="fas fa-hand-point-up"></i> 點擊圖片可放大檢查</p>
+                <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x"></div>
+                <p class="text-xs text-center text-gray-400 mt-1">點擊圖片可放大</p>
             </div>
-            
             <div class="flex gap-3">
-                <button onclick="document.getElementById('fileInput').click()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-300 active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <i class="fas fa-plus"></i> 加拍
-                </button>
-                <button id="analyzeBtn" onclick="window.analyzeImage()" class="flex-[2] bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <i class="fas fa-sparkles"></i> 開始分析
-                </button>
+                <button onclick="document.getElementById('fileInput').click()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl">加拍</button>
+                <button onclick="window.analyzeImage()" class="flex-[2] bg-blue-600 text-white font-bold py-3 rounded-xl">開始分析</button>
             </div>
         </div>
 
         <div id="loadingSection" class="hidden flex-col items-center justify-center py-10 text-center">
             <div class="loader mb-4"></div>
-            <h3 class="text-lg font-bold text-gray-700">正在解讀產品資訊...</h3>
-            <p class="text-gray-500 text-sm mt-2" id="loadingText">處理影像中...</p>
+            <p class="text-gray-500 text-sm" id="loadingText">處理中...</p>
         </div>
 
-        <div id="resultSection" class="hidden space-y-4 animate-fade-in pb-10">
-            <button id="historyBackBtn" onclick="window.history.back()" class="hidden mb-3 text-blue-600 font-bold flex items-center hover:text-blue-800 transition"><i class="fas fa-chevron-left mr-1"></i> 返回紀錄列表</button>
+        <div id="resultSection" class="hidden space-y-4 pb-10">
+            <button onclick="window.history.back()" class="mb-3 text-blue-600 font-bold flex items-center"><i class="fas fa-chevron-left mr-1"></i> 返回</button>
             <div id="saveStatusMsg" class="hidden p-3 rounded-lg text-sm mb-4"></div>
-
             <div id="resultImageContainer" class="hidden mb-4"></div>
 
             <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500">
@@ -100,77 +90,62 @@
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">重點翻譯</h3>
                 <p id="resTranslation" class="text-gray-700 leading-relaxed"></p>
             </div>
-            <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl shadow-sm p-5 border border-indigo-100">
-                <h3 class="font-bold text-indigo-900 mb-2">白話文懶人包</h3>
-                <p id="resExplanation" class="text-gray-800 font-medium leading-relaxed"></p>
+            <div class="bg-blue-50 rounded-xl shadow-sm p-5">
+                <h3 class="font-bold text-blue-900 mb-2">白話文懶人包</h3>
+                <p id="resExplanation" class="text-gray-800"></p>
             </div>
 
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-6">
-                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 flex justify-between items-center text-white">
-                    <h3 class="font-bold text-sm"><i class="fas fa-robot mr-2"></i>還有問題？問問 AI</h3>
-                </div>
-                <div id="chatHistory" class="p-4 space-y-4 max-h-[300px] overflow-y-auto bg-gray-50 text-sm">
-                    <div class="flex gap-2">
-                        <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div>
-                        <div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">
-                            對這個產品還有疑問嗎？例如成分、熱量或是使用方法？歡迎隨時問我！
-                        </div>
-                    </div>
-                </div>
-                <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
-                    <input type="text" id="chatInput" placeholder="輸入您的問題..." class="flex-grow bg-gray-100 border-0 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none transition" onkeypress="handleChatKey(event)">
-                    <button onclick="sendChatMessage()" id="sendChatBtn" class="bg-purple-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-purple-700 active:scale-95 transition shadow-sm"><i class="fas fa-paper-plane"></i></button>
+                <div class="bg-purple-600 text-white p-3 font-bold text-sm">問問 AI</div>
+                <div id="chatHistory" class="p-4 space-y-4 max-h-[300px] overflow-y-auto bg-gray-50 text-sm"></div>
+                <div class="p-3 bg-white border-t flex gap-2">
+                    <input type="text" id="chatInput" placeholder="輸入問題..." class="flex-grow bg-gray-100 rounded-full px-4 py-2" onkeypress="window.handleChatKey(event)">
+                    <button onclick="window.sendChatMessage()" class="bg-purple-600 text-white w-10 h-10 rounded-full"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
 
         <div id="historySection" class="hidden animate-fade-in">
             <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
-                <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-clock mr-2 text-blue-500"></i>分析紀錄</h2>
-                <button onclick="window.clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50 transition">清空紀錄</button>
+                <h2 class="text-lg font-bold text-gray-800">歷史紀錄</h2>
+                <button onclick="window.clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded">清空</button>
             </div>
             <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-100">
                 <div class="flex justify-between items-center mb-2">
-                    <div class="text-blue-800 overflow-hidden">
-                        <span class="block text-xs text-blue-500">目前帳號 ID</span>
-                        <span id="displayUserId" class="font-mono font-bold text-base truncate block max-w-[150px]">...</span>
-                    </div>
+                    <div class="text-blue-800">ID: <span id="displayUserId" class="font-mono font-bold">...</span></div>
                     <div class="flex gap-2">
-                        <button onclick="window.copyShareLink()" class="flex-shrink-0 bg-white text-blue-600 border border-blue-200 px-2 py-1.5 rounded-lg shadow-sm hover:bg-blue-50 transition" title="複製連結"><i class="fas fa-link"></i></button>
-                        <button onclick="window.switchUser()" class="flex-shrink-0 bg-white text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-100 transition active:scale-95"><i class="fas fa-exchange-alt mr-1"></i>切換</button>
+                        <button onclick="window.copyShareLink()" class="bg-white text-blue-600 border border-blue-200 px-2 py-1 rounded">複製連結</button>
+                        <button onclick="window.switchUser()" class="bg-white text-blue-600 border border-blue-200 px-2 py-1 rounded">切換</button>
                     </div>
                 </div>
-                <div class="text-xs text-blue-400"><i class="fas fa-info-circle mr-1"></i>分享連結範例：<br><span id="shareLinkExample" class="select-all bg-blue-100/50 px-1 rounded">...</span></div>
             </div>
             <div id="historyList" class="space-y-3 pb-10"></div>
             <button onclick="window.resetApp()" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl mt-4">返回首頁</button>
         </div>
     </main>
 
-    <div id="imageModal" style="display: none;" class="fixed inset-0 bg-black/95 items-center justify-center p-2 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeImageModal()">
-        <button onclick="window.closeImageModal()" class="absolute top-4 right-4 z-[10000] text-white bg-gray-800/50 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center transition-colors">
+    <div id="imageModal" style="display: none;" class="fixed inset-0 bg-black/95 flex items-center justify-center p-2 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="window.closeImageModal()">
+        <button onclick="window.closeImageModal()" class="absolute top-4 right-4 z-[10000] text-white bg-gray-800/50 rounded-full w-12 h-12 flex items-center justify-center">
             <i class="fas fa-times text-2xl"></i>
         </button>
-        <img id="modalImage" class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl scale-95 transition-transform duration-200" src="" alt="Full size" onclick="event.stopPropagation()">
+        <img id="modalImage" class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl scale-95 transition-transform duration-300" src="" alt="Full size" onclick="event.stopPropagation()">
     </div>
     
-    <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeInstallModal()">
+    <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onclick="window.closeInstallModal()">
         <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative" onclick="event.stopPropagation()">
-            <button onclick="window.closeInstallModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="window.closeInstallModal()" class="absolute top-3 right-3 text-gray-400"><i class="fas fa-times text-xl"></i></button>
             <div class="text-center">
-                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl"><i class="fas fa-mobile-alt"></i></div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">安裝到手機桌面</h3>
-                <p class="text-sm text-gray-500 mb-6">像 App 一樣使用，方便又快速！</p>
-                <div id="iosInstall" class="hidden text-left bg-gray-50 p-4 rounded-lg border border-gray-100"><p class="text-sm text-gray-700 font-bold mb-2">👉 iOS 使用者：</p><ol class="list-decimal list-inside text-sm text-gray-600 space-y-2"><li>點擊下方 <strong class="text-blue-600"><i class="fas fa-share-square"></i> 分享</strong></li><li>點擊 <strong class="text-blue-600"><i class="fas fa-plus-square"></i> 加入主畫面</strong></li><li>點擊 <strong>新增</strong></li></ol></div>
-                <div id="androidInstall" class="hidden text-left bg-gray-50 p-4 rounded-lg border border-gray-100"><p class="text-sm text-gray-700 font-bold mb-2">👉 Android 使用者：</p><ol class="list-decimal list-inside text-sm text-gray-600 space-y-2"><li>點擊右上角 <strong class="text-blue-600"><i class="fas fa-ellipsis-v"></i> 選單</strong></li><li>點擊 <strong class="text-blue-600"><i class="fas fa-mobile-alt"></i> 加到主畫面</strong></li><li>點擊 <strong>新增</strong></li></ol></div>
-                <div id="pcInstall" class="hidden text-left bg-gray-50 p-4 rounded-lg border border-gray-100"><p class="text-sm text-gray-700 font-bold mb-2">👉 電腦版：</p><p class="text-sm text-gray-600">按 <kbd>Ctrl</kbd> + <kbd>D</kbd> 加入書籤。</p></div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">安裝到手機</h3>
+                <p class="text-sm text-gray-500 mb-4">點擊瀏覽器選單中的「加入主畫面」即可。</p>
+                <div id="iosInstall" class="hidden text-sm text-left bg-gray-50 p-3 rounded">iOS: 分享按鈕 <i class="fas fa-share-square"></i> -> 加入主畫面</div>
+                <div id="androidInstall" class="hidden text-sm text-left bg-gray-50 p-3 rounded">Android: 選單 <i class="fas fa-ellipsis-v"></i> -> 加到主畫面</div>
             </div>
         </div>
     </div>
 
     <script>
         // ============================================
-        // ⚠️ 關鍵：請將這裡換成您的 GAS 網頁應用程式網址 (結尾 /exec)
+        // ⚠️ 這裡填入您的 GAS 網址 (結尾需為 /exec)
         // ============================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec"; 
 
@@ -180,144 +155,155 @@
         let currentProductContext = {}; 
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
-        
-        // 確保 DOM 載入後執行初始化
+        let userId = '';
+
+        // 頁面載入初始化
         window.addEventListener('DOMContentLoaded', () => {
-             // 網址參數解析
             const urlParams = new URLSearchParams(window.location.search);
             const urlUserId = urlParams.get('uid');
-
-            let userId;
-            let shouldSync = false;
-
+            
             if (urlUserId && urlUserId.trim() !== "") {
                 userId = urlUserId.replace(/[<>"'/\\`]/g, '');
                 localStorage.setItem(USER_ID_KEY, userId);
-                shouldSync = true;
             } else {
                 userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
                 localStorage.setItem(USER_ID_KEY, userId);
             }
-            window.userId = userId; // 全域
-
+            window.userId = userId;
+            
             updateUserInfoDisplay();
-            if (shouldSync) setTimeout(window.syncHistoryFromServer, 500);
+            
+            // 處理瀏覽器上一頁/下一頁 (Back Button Fix)
+            window.onpopstate = function(event) {
+                if (event.state) {
+                    if (event.state.view === 'history') {
+                        showSection('history');
+                    } else if (event.state.view === 'home') {
+                        showSection('home');
+                    } else if (event.state.view === 'result') {
+                        // 如果有結果資料就顯示，沒有就回首頁
+                        const resSection = document.getElementById('resultSection');
+                        if (resSection.classList.contains('hidden')) {
+                            showSection('home');
+                        } else {
+                            showSection('result');
+                        }
+                    }
+                } else {
+                    // 預設回首頁
+                    showSection('home');
+                }
+            };
+            
+            // 初始狀態
+            history.replaceState({view: 'home'}, '', window.location.pathname);
         });
 
-        const loadingSteps = ["處理多張影像...", "呼叫 AI 大腦...", "綜合分析成分...", "正在存入您的專屬雲端..."];
+        // 畫面切換 helper
+        function showSection(sectionName) {
+            const sections = ['uploadSection', 'previewSection', 'loadingSection', 'resultSection', 'historySection'];
+            sections.forEach(id => document.getElementById(id).classList.add('hidden'));
+            
+            if (sectionName === 'home') {
+                if (currentBase64Array.length > 0) {
+                    document.getElementById('previewSection').classList.remove('hidden');
+                } else {
+                    document.getElementById('uploadSection').classList.remove('hidden');
+                }
+            } else if (sectionName === 'history') {
+                document.getElementById('historySection').classList.remove('hidden');
+                renderHistoryList();
+            } else if (sectionName === 'result') {
+                document.getElementById('resultSection').classList.remove('hidden');
+            } else if (sectionName === 'loading') {
+                document.getElementById('loadingSection').classList.remove('hidden');
+                document.getElementById('loadingSection').style.display = 'flex';
+            }
+        }
 
         // ============================================
-        //  圖片放大功能 (強制全域註冊)
+        //  圖片放大功能 (最穩定的寫法)
         // ============================================
         window.openImageModal = function(src) {
-            console.log("嘗試開啟圖片:", src ? "有圖片連結" : "無連結");
             const modal = document.getElementById('imageModal');
             const img = document.getElementById('modalImage');
-            
-            if (!modal || !img) {
-                console.error("找不到 Modal 元素");
-                return;
-            }
+            if (!modal || !img) return;
             
             img.src = src; 
-            
-            // 強制設定樣式，不依賴 Tailwind class
             modal.style.display = 'flex';
-            modal.classList.remove('hidden'); 
             
-            // 動畫
-            setTimeout(() => { 
-                modal.classList.remove('opacity-0'); 
-                img.classList.remove('scale-95'); 
-                img.classList.add('scale-100'); 
-            }, 10); 
+            // 強制 Reflow 後再加 opacity，確保 transition 運作
+            void modal.offsetWidth; 
             
-            document.body.style.overflow = 'hidden'; 
+            modal.classList.remove('opacity-0');
+            img.classList.remove('scale-95');
+            img.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
         }
 
         window.closeImageModal = function() { 
             const modal = document.getElementById('imageModal');
             const img = document.getElementById('modalImage');
-            
             if (!modal) return;
 
-            modal.classList.add('opacity-0'); 
+            modal.classList.add('opacity-0');
             if(img) {
-                img.classList.remove('scale-100'); 
-                img.classList.add('scale-95'); 
+                img.classList.remove('scale-100');
+                img.classList.add('scale-95');
             }
             
             setTimeout(() => { 
-                modal.style.display = 'none'; // 強制隱藏
-                modal.classList.add('hidden'); 
+                modal.style.display = 'none'; 
                 if(img) img.src = ''; 
                 document.body.style.overflow = ''; 
-            }, 200); 
+            }, 300);
         }
 
         // ============================================
-        //  API 呼叫函式
+        //  API 呼叫
         // ============================================
         async function callGAS(action, payload) {
             if(!GAS_API_URL || GAS_API_URL.includes("您的-DEPLOYMENT-ID")) {
-                alert("請先修改 index.html 中的 GAS_API_URL 為您自己的 GAS 部署網址！");
-                throw new Error("API URL not set");
+                alert("請設定正確的 GAS 網址！");
+                throw new Error("API URL error");
             }
-
-            const body = JSON.stringify({
-                action: action,
-                userId: window.userId,
-                ...payload
-            });
-
+            const body = JSON.stringify({ action: action, userId: window.userId, ...payload });
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',  
                 body: body,      
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
             });
-
             const json = await response.json();
             if (json.error) throw new Error(json.error);
             return json;
         }
 
         // ============================================
-        //  邏輯函式 (全部掛載到 window)
+        //  應用邏輯
         // ============================================
-
         window.updateUserInfoDisplay = function() {
-            const displayUserId = document.getElementById('displayUserId');
-            const homeUserId = document.getElementById('homeUserId'); 
-            const shareLinkExample = document.getElementById('shareLinkExample');
-            
-            if (displayUserId) displayUserId.innerText = window.userId;
-            if (homeUserId) homeUserId.innerText = window.userId;
-            const currentUrl = window.location.href.split('?')[0];
-            if (shareLinkExample) shareLinkExample.innerText = currentUrl + '?uid=' + window.userId;
+            document.getElementById('homeUserId').innerText = window.userId;
+            document.getElementById('displayUserId').innerText = window.userId;
         }
 
         window.handleFileSelect = async function(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
-            const previewContainer = document.getElementById('previewContainer');
-            
-            // 讀取檔案
             const promises = Array.from(files).map(file => {
                 return new Promise((resolve) => {
                     const reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = (e) => {
                         const img = new Image();
-                        img.onload = function() {
+                        img.onload = () => {
                             const canvas = document.createElement('canvas');
-                            let width = img.width; let height = img.height;
-                            const maxDim = 1024; 
-                            if (width > maxDim || height > maxDim) {
-                                if (width > height) { height *= maxDim / width; width = maxDim; } else { width *= maxDim / height; height = maxDim; }
+                            let w = img.width, h = img.height;
+                            const max = 1024;
+                            if (w > max || h > max) {
+                                if (w > h) { h *= max / w; w = max; } else { w *= max / h; h = max; }
                             }
-                            canvas.width = width; canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                             resolve(canvas.toDataURL('image/jpeg', 0.7));
                         };
                         img.src = e.target.result;
@@ -334,317 +320,172 @@
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200";
                 
-                const img = document.createElement('img');
-                img.src = base64;
-                // 這裡直接使用 window.openImageModal
-                img.onclick = function() { window.openImageModal(base64); };
-                img.className = "w-full h-full object-cover cursor-pointer";
+                // 使用 onclick 直接綁定，不透過 addEventListener
+                div.innerHTML = `<img src="${base64}" class="w-full h-full object-cover cursor-pointer" onclick="window.openImageModal(this.src)">`;
                 
                 const badge = document.createElement('div');
                 badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
                 badge.innerText = startIndex + index + 1;
-                
-                div.appendChild(img);
                 div.appendChild(badge);
-                previewContainer.appendChild(div);
+                
+                document.getElementById('previewContainer').appendChild(div);
             });
             
-            setTimeout(() => { previewContainer.scrollLeft = previewContainer.scrollWidth; }, 100);
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
-
-            document.getElementById('historySection').classList.add('hidden');
-            document.getElementById('uploadSection').classList.add('hidden');
-            document.getElementById('previewSection').classList.remove('hidden');
-            document.getElementById('resultSection').classList.add('hidden');
+            showSection('home'); // 其實還是 home，只是顯示預覽區
         }
 
-        window.resetApp = function(pushState = true) {
-            if (pushState) window.history.pushState({view: 'home'}, '', window.location.pathname);
-            
-            document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+        window.resetApp = function() {
             currentBase64Array = []; 
             document.getElementById('previewContainer').innerHTML = ''; 
             if (loadingInterval) clearInterval(loadingInterval);
-            
-            document.getElementById('uploadSection').classList.remove('hidden');
-            document.getElementById('previewSection').classList.add('hidden');
-            document.getElementById('loadingSection').classList.add('hidden');
-            document.getElementById('loadingSection').style.display = '';
-            document.getElementById('resultSection').classList.add('hidden');
-            document.getElementById('historySection').classList.add('hidden'); 
-            document.getElementById('saveStatusMsg').classList.add('hidden');
+            history.pushState({view: 'home'}, '', '#home');
+            showSection('home');
             window.scrollTo(0, 0);
         }
 
-        window.navigateToHistory = function() { window.showHistory(true); }
-
-        window.showHistory = function(pushState = true) {
-            if (pushState) window.history.pushState({view: 'history'}, '', '#history');
-            document.getElementById('uploadSection').classList.add('hidden');
-            document.getElementById('previewSection').classList.add('hidden');
-            document.getElementById('loadingSection').classList.add('hidden');
-            document.getElementById('resultSection').classList.add('hidden');
-            document.getElementById('historySection').classList.remove('hidden');
-            renderHistoryList();
-            window.scrollTo(0, 0);
+        window.navigateToHistory = function() { 
+            history.pushState({view: 'history'}, '', '#history');
+            showSection('history');
         }
 
         window.analyzeImage = async function() {
             if (currentBase64Array.length === 0) return;
+            showSection('loading');
             
-            document.getElementById('previewSection').classList.add('hidden');
-            document.getElementById('loadingSection').classList.remove('hidden');
-            document.getElementById('loadingSection').style.display = 'flex';
-            
-            let stepIndex = 0;
-            if (loadingInterval) clearInterval(loadingInterval);
-            loadingInterval = setInterval(function() {
-                document.getElementById('loadingText').innerText = loadingSteps[stepIndex % loadingSteps.length];
-                stepIndex++;
+            let step = 0;
+            const steps = ["處理影像...", "AI 分析中...", "翻譯成中文...", "整理結果..."];
+            loadingInterval = setInterval(() => {
+                document.getElementById('loadingText').innerText = steps[step % steps.length];
+                step++;
             }, 1500);
 
-            const base64List = currentBase64Array.map(b => b.split(',')[1]);
-            
             try {
-                const result = await callGAS('analyze', { base64DataList: base64List });
-                if (loadingInterval) clearInterval(loadingInterval);
+                const result = await callGAS('analyze', { base64DataList: currentBase64Array.map(b => b.split(',')[1]) });
+                clearInterval(loadingInterval);
+                
+                history.pushState({view: 'result'}, '', '#result');
                 renderResult(result); 
                 saveToHistory(result);
             } catch (error) {
-                handleAnalysisError(error);
+                clearInterval(loadingInterval);
+                alert("錯誤：" + error.message);
+                showSection('home');
             }
         }
 
-        window.handleAnalysisError = function(error) {
-            if (loadingInterval) clearInterval(loadingInterval);
-            alert("分析發生錯誤：" + error.message + "\n\n不用擔心，照片還在！請檢查網路後再試一次按鈕。");
-            document.getElementById('loadingSection').classList.add('hidden');
-            document.getElementById('previewSection').classList.remove('hidden'); 
-            document.getElementById('resultSection').classList.add('hidden');
-        }
-
-        window.renderResult = function(data, fromHistory = false) {
-            currentProductContext = { productName: data.productName, translation: data.translation, explanation: data.explanation };
-            const chatHistory = document.getElementById('chatHistory');
-            chatHistory.innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">對這個產品還有疑問嗎？例如成分、熱量或是使用方法？歡迎隨時問我！</div></div>';
-
-            document.getElementById('loadingSection').classList.add('hidden');
-            document.getElementById('resultSection').classList.remove('hidden');
-            document.getElementById('historySection').classList.add('hidden'); 
-            document.getElementById('uploadSection').classList.add('hidden'); 
-
-            const historyBackBtn = document.getElementById('historyBackBtn');
-            if (fromHistory) { historyBackBtn.classList.remove('hidden'); } else { historyBackBtn.classList.add('hidden'); }
-
-            document.getElementById('resName').innerText = data.productName || "未知產品";
-            document.getElementById('resTranslation').innerText = data.translation || "無內容";
-            document.getElementById('resExplanation').innerText = data.explanation || "無解釋";
-
-            let images = [];
-            if (currentBase64Array && currentBase64Array.length > 0) {
-                images = currentBase64Array;
-            } else if (data.imageUrls && Array.isArray(data.imageUrls)) {
-                images = data.imageUrls;
-            } else if (data.imageUrl) {
-                images = [data.imageUrl];
-            }
-
-            const resultImageContainer = document.getElementById('resultImageContainer');
-            resultImageContainer.innerHTML = '';
+        window.renderResult = function(data) {
+            currentProductContext = data;
             
-            if (images.length > 0) {
-                resultImageContainer.className = "flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x mb-4"; 
-                resultImageContainer.classList.remove('hidden');
+            // 設定文字
+            document.getElementById('resName').innerText = data.productName || "未知";
+            document.getElementById('resTranslation').innerText = data.translation || "無";
+            document.getElementById('resExplanation').innerText = data.explanation || "無";
+            
+            // 設定圖片
+            const container = document.getElementById('resultImageContainer');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+            container.className = "flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x mb-4";
+            
+            const images = data.imageUrls || (data.imageUrl ? [data.imageUrl] : currentBase64Array);
+            images.forEach((src) => {
+                const div = document.createElement('div');
+                div.className = "w-64 h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm snap-center relative flex-shrink-0 bg-gray-100";
+                div.innerHTML = `<img src="${src}" class="w-full h-full object-cover cursor-pointer" onclick="window.openImageModal(this.src)">`;
+                container.appendChild(div);
+            });
 
-                images.forEach((src, index) => {
-                    const div = document.createElement('div');
-                    if (images.length === 1) {
-                        div.className = "w-full h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative bg-white flex-shrink-0";
-                    } else {
-                        div.className = "w-64 h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm snap-center relative bg-white flex-shrink-0";
-                    }
-                    
-                    const img = document.createElement('img');
-                    img.src = src;
-                    img.className = "w-full h-full object-cover cursor-pointer";
-                    // 這裡也直接使用 window.openImageModal
-                    img.onclick = function() { window.openImageModal(src); };
-                    
-                    div.appendChild(img);
-                    
-                    if (images.length > 1) {
-                        div.innerHTML += '<div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full pointer-events-none">' + (index + 1) + '/' + images.length + '</div>';
-                    } else {
-                        div.innerHTML += '<div class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded pointer-events-none"><i class="fas fa-search-plus mr-1"></i>放大</div>';
-                    }
-                    resultImageContainer.appendChild(div);
-                });
-            } else {
-                resultImageContainer.classList.add('hidden');
-            }
-
-            const saveStatusMsg = document.getElementById('saveStatusMsg');
-            saveStatusMsg.className = "hidden p-3 rounded-lg text-sm mb-4";
-            if (data.saveSuccess) {
-                saveStatusMsg.innerHTML = '<i class="fas fa-check-circle mr-1"></i> 已儲存至您的專屬資料夾！';
-                saveStatusMsg.className = "block bg-green-100 text-green-700 p-3 rounded-lg text-sm mb-4";
-            } else if (data.saveError) {
-                saveStatusMsg.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> 儲存失敗：' + data.saveError;
-                saveStatusMsg.className = "block bg-red-100 text-red-700 p-3 rounded-lg text-sm mb-4";
-            }
-
-            setTimeout(function() { window.scrollTo({ top: 0, behavior: 'auto' }); }, 50);
+            // 初始化聊天
+            document.getElementById('chatHistory').innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">有問題歡迎問我！</div></div>';
+            
+            showSection('result');
+            window.scrollTo(0, 0);
         }
 
         window.handleChatKey = function(e) { if(e.key === 'Enter') window.sendChatMessage(); }
 
         window.sendChatMessage = async function() {
-            const chatInput = document.getElementById('chatInput');
-            const chatHistory = document.getElementById('chatHistory');
-            const question = chatInput.value.trim();
-            if (!question) return;
+            const input = document.getElementById('chatInput');
+            const q = input.value.trim();
+            if (!q) return;
+            
+            const chat = document.getElementById('chatHistory');
+            chat.innerHTML += `<div class="flex gap-2 justify-end mb-2"><div class="bg-purple-600 text-white p-3 rounded-l-xl rounded-br-xl shadow-sm max-w-[85%]">${q}</div></div>`;
+            input.value = '';
+            chat.scrollTop = chat.scrollHeight;
 
-            const userHtml = '<div class="flex gap-2 justify-end animate-fade-in"><div class="bg-purple-600 text-white p-3 rounded-l-xl rounded-br-xl shadow-sm max-w-[85%]">' + question + '</div></div>';
-            chatHistory.insertAdjacentHTML('beforeend', userHtml);
-            chatInput.value = '';
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            const loadingId = 'chat-loading-' + Date.now();
-            const loadingHtml = '<div id="' + loadingId + '" class="flex gap-2 animate-fade-in"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-500 border border-gray-100 flex items-center"><span class="chat-loader"></span><span class="chat-loader"></span><span class="chat-loader"></span></div></div>';
-            chatHistory.insertAdjacentHTML('beforeend', loadingHtml);
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            const imagesDataToSend = currentBase64Array.length > 0 ? currentBase64Array.map(b => b.split(',')[1]) : null;
+            const loadId = 'load-' + Date.now();
+            chat.innerHTML += `<div id="${loadId}" class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-400">...</div></div>`;
+            chat.scrollTop = chat.scrollHeight;
 
             try {
-                const response = await callGAS('chat', { 
-                    question: question,
-                    productContext: currentProductContext,
-                    base64DataList: imagesDataToSend
+                const res = await callGAS('chat', { 
+                    question: q, 
+                    productContext: currentProductContext, 
+                    base64DataList: currentBase64Array.map(b => b.split(',')[1]) 
                 });
-
-                document.getElementById(loadingId).remove();
-                const aiHtml = '<div class="flex gap-2 animate-fade-in"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">' + response.reply + '</div></div>';
-                chatHistory.insertAdjacentHTML('beforeend', aiHtml);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            } catch (error) {
-                document.getElementById(loadingId).remove();
-                const errHtml = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-exclamation-circle"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-red-600 border border-red-100">抱歉，AI 暫時無法回應。錯誤：' + error.message + '</div></div>';
-                chatHistory.insertAdjacentHTML('beforeend', errHtml);
+                document.getElementById(loadId).remove();
+                chat.innerHTML += `<div class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-800">${res.reply}</div></div>`;
+            } catch (e) {
+                document.getElementById(loadId).innerText = "錯誤";
             }
+            chat.scrollTop = chat.scrollHeight;
         }
 
         window.saveToHistory = function(data) {
-            try {
-                const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                const newItem = { 
-                    id: Date.now(), 
-                    timestamp: new Date().getTime(), 
-                    productName: data.productName, 
-                    translation: data.translation, 
-                    explanation: data.explanation, 
-                    imageUrl: data.imageUrl,
-                    imageUrls: data.imageUrls || (data.imageUrl ? [data.imageUrl] : [])
-                };
-                history.unshift(newItem);
-                if (history.length > 20) { history.pop(); }
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-            } catch (e) { console.error("儲存失敗", e); }
+            const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            history.unshift({ 
+                id: Date.now(), 
+                timestamp: Date.now(), 
+                productName: data.productName, 
+                translation: data.translation, 
+                explanation: data.explanation, 
+                imageUrls: data.imageUrls || [data.imageUrl] 
+            });
+            if (history.length > 20) history.pop();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
         }
 
         window.renderHistoryList = function() {
-            const listEl = document.getElementById('historyList');
+            const list = document.getElementById('historyList');
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            
-            if (history.length === 0) { listEl.innerHTML = '<div class="text-center py-10 text-gray-400"><i class="fas fa-inbox text-4xl mb-3 block"></i>目前沒有紀錄<br><span class="text-xs">若剛切換帳號，建議點擊「切換/同步」按鈕來載入雲端資料</span></div>'; return; }
-
-            listEl.innerHTML = history.map((item, index) => {
-                const date = new Date(item.timestamp);
-                const dateStr = date.toLocaleDateString() + ' ' + date.getHours() + ':' + String(date.getMinutes()).padStart(2, '0');
-                const images = item.imageUrls || (item.imageUrl ? [item.imageUrl] : []);
-                const firstImage = images.length > 0 ? images[0] : null;
-                const countBadge = images.length > 1 ? '<span class="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 rounded-full">+' + (images.length - 1) + '</span>' : '';
-
-                var imgHtml = firstImage 
-                    ? '<div class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden mr-3 relative"><img src="' + firstImage + '" class="w-full h-full object-cover">' + countBadge + '</div>'
-                    : '<div class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center mr-3 text-gray-400"><i class="fas fa-image"></i></div>';
-
-                return '<div class="history-card bg-white rounded-xl shadow-sm p-3 border border-gray-100 cursor-pointer transition flex items-start" onclick="window.viewHistoryItem(' + index + ')">' + imgHtml + '<div class="flex-grow min-w-0"><div class="flex justify-between items-start mb-1"><h3 class="font-bold text-gray-800 text-md truncate pr-2">' + (item.productName || '未知產品') + '</h3><span class="text-xs text-gray-400 whitespace-nowrap">' + dateStr + '</span></div><p class="text-sm text-gray-500 line-clamp-2">' + (item.explanation || '無說明') + '</p></div></div>';
+            if (history.length === 0) {
+                list.innerHTML = '<div class="text-center py-10 text-gray-400">無紀錄</div>';
+                return;
+            }
+            list.innerHTML = history.map((item, idx) => {
+                const img = (item.imageUrls && item.imageUrls[0]) || '';
+                const date = new Date(item.timestamp).toLocaleString();
+                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer" onclick="window.viewHistoryItem(${idx})">
+                    <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
+                    <div><div class="font-bold text-gray-800 truncate">${item.productName}</div><div class="text-xs text-gray-400">${date}</div></div>
+                </div>`;
             }).join('');
         }
 
-        window.viewHistoryItem = function(index) {
+        window.viewHistoryItem = function(idx) {
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            const item = history[index];
-            if (item) {
-                currentBase64Array = []; 
-                window.history.pushState({view: 'item'}, '', '#item');
-                renderResult(item, true); 
-                document.getElementById('saveStatusMsg').classList.add('hidden'); 
+            if (history[idx]) {
+                currentBase64Array = []; // 歷史紀錄不支援再問圖片問題，除非重新下載
+                window.history.pushState({view: 'result'}, '', '#result');
+                renderResult(history[idx]);
+                document.getElementById('saveStatusMsg').classList.add('hidden');
             }
         }
 
-        window.clearHistory = function() { if (confirm("確定要清空本地紀錄嗎？(雲端資料不會刪除)")) { localStorage.removeItem(STORAGE_KEY); renderHistoryList(); } }
-
-        window.syncHistoryFromServer = async function() {
-            console.log("正在同步資料...");
-            try {
-                const serverHistory = await callGAS('getHistory', {});
-                if (serverHistory && serverHistory.length > 0) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory));
-                    if (!document.getElementById('historySection').classList.contains('hidden')) { renderHistoryList(); }
-                }
-            } catch (e) {
-                console.error("同步失敗", e);
-            }
-        }
-
-        window.switchUser = async function() {
-            const newId = prompt("請輸入帳號 ID (建議設為 Mom, Me 等簡單名稱)\n\n若該 ID 已有雲端紀錄，將自動同步。", window.userId);
-            if (newId && newId.trim() !== "") {
-                if (confirm("即將切換至帳號: " + newId + "\n這將會清除目前的畫面並從雲端載入該帳號的紀錄。")) {
-                    window.userId = newId.trim(); 
-                    localStorage.setItem(USER_ID_KEY, window.userId); 
-                    updateUserInfoDisplay();
-                    document.getElementById('historyList').innerHTML = '<div class="text-center py-10"><div class="loader mx-auto mb-2"></div><p class="text-gray-400">正在雲端同步資料...</p></div>';
-                    
-                    try {
-                        const serverHistory = await callGAS('getHistory', {});
-                        if (serverHistory && serverHistory.length > 0) { 
-                            localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory)); 
-                            renderHistoryList(); 
-                            alert("同步成功！已載入 " + serverHistory.length + " 筆紀錄。"); 
-                        } else { 
-                            localStorage.setItem(STORAGE_KEY, '[]'); 
-                            renderHistoryList(); 
-                            alert("切換成功！此帳號目前沒有雲端紀錄。"); 
-                        }
-                    } catch (err) {
-                        alert("同步失敗：" + err.message);
-                        renderHistoryList();
-                    }
-                }
-            }
-        }
-
-        window.copyShareLink = function() {
-            const currentUrl = window.location.href.split('?')[0];
-            const shareUrl = currentUrl + '?uid=' + window.userId;
-            const el = document.createElement('textarea'); el.value = shareUrl; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("連結已複製！\n您可以將此連結傳給他人，對方開啟後將會自動登入此帳號。");
+        window.clearHistory = function() {
+            if(confirm("確定清空？")) { localStorage.removeItem(STORAGE_KEY); renderHistoryList(); }
         }
 
         window.showInstallPrompt = function() {
             const ua = navigator.userAgent.toLowerCase();
-            const isIOS = /iphone|ipad|ipod/.test(ua); const isAndroid = /android/.test(ua);
-            if (isIOS) { document.getElementById('iosInstall').classList.remove('hidden'); }
-            else if (isAndroid) { document.getElementById('androidInstall').classList.remove('hidden'); }
-            else { document.getElementById('pcInstall').classList.remove('hidden'); }
-            installModal.classList.remove('hidden'); requestAnimationFrame(() => { installModal.classList.remove('opacity-0'); });
+            if (ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1) document.getElementById('iosInstall').classList.remove('hidden');
+            else if (ua.indexOf('android') > -1) document.getElementById('androidInstall').classList.remove('hidden');
+            document.getElementById('installModal').classList.remove('hidden');
         }
-        window.closeInstallModal = function() { installModal.classList.add('opacity-0'); setTimeout(() => { installModal.classList.add('hidden'); document.getElementById('iosInstall').classList.add('hidden'); document.getElementById('androidInstall').classList.add('hidden'); document.getElementById('pcInstall').classList.add('hidden'); }, 200); }
-
+        
+        window.closeInstallModal = function() { document.getElementById('installModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
