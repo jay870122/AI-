@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 產品拍立解</title>
+    
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3687/3687412.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3687/3687412.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* ... 請複製你原本的 CSS ... */
         html { height: auto; min-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: manipulation; }
         body { font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; min-height: 100vh; overflow-y: visible; overflow-x: hidden; position: relative; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
@@ -36,8 +38,9 @@
     </header>
 
     <main class="flex-grow p-4 max-w-md mx-auto w-full pb-20">
+        
         <div id="uploadSection" class="bg-white rounded-2xl shadow-sm p-6 text-center transition-all duration-300">
-             <div class="mb-6">
+            <div class="mb-6">
                 <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><i class="fas fa-camera text-4xl"></i></div>
                 <h2 class="text-lg font-bold text-gray-800 mb-2">拍下產品包裝</h2>
                 <p class="text-gray-500 text-sm">多圖問答版<br>拍完一張，可按「加拍」繼續拍下一張！</p>
@@ -64,7 +67,7 @@
         </div>
 
         <div id="previewSection" class="hidden space-y-4">
-             <div class="bg-gray-100 rounded-xl p-2">
+            <div class="bg-gray-100 rounded-xl p-2">
                 <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x">
                     </div>
                 <p class="text-xs text-center text-gray-400 mt-1"><i class="fas fa-hand-point-up"></i> 左右滑動檢查照片</p>
@@ -81,13 +84,13 @@
         </div>
 
         <div id="loadingSection" class="hidden flex-col items-center justify-center py-10 text-center">
-             <div class="loader mb-4"></div>
+            <div class="loader mb-4"></div>
             <h3 class="text-lg font-bold text-gray-700">正在解讀產品資訊...</h3>
             <p class="text-gray-500 text-sm mt-2" id="loadingText">處理影像中...</p>
         </div>
 
         <div id="resultSection" class="hidden space-y-4 animate-fade-in pb-10">
-             <button id="historyBackBtn" onclick="window.history.back()" class="hidden mb-3 text-blue-600 font-bold flex items-center hover:text-blue-800 transition"><i class="fas fa-chevron-left mr-1"></i> 返回紀錄列表</button>
+            <button id="historyBackBtn" onclick="window.history.back()" class="hidden mb-3 text-blue-600 font-bold flex items-center hover:text-blue-800 transition"><i class="fas fa-chevron-left mr-1"></i> 返回紀錄列表</button>
             <div id="saveStatusMsg" class="hidden p-3 rounded-lg text-sm mb-4"></div>
 
             <div id="resultImageContainer" class="hidden mb-4"></div>
@@ -125,7 +128,7 @@
         </div>
 
         <div id="historySection" class="hidden animate-fade-in">
-             <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
+            <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-clock mr-2 text-blue-500"></i>分析紀錄</h2>
                 <button onclick="clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50 transition">清空紀錄</button>
             </div>
@@ -153,17 +156,24 @@
     </div>
     
     <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeInstallModal()">
-       <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative" onclick="event.stopPropagation()">
-           <h3 class="text-xl font-bold text-gray-800 mb-2">安裝到手機桌面</h3>
-           <button onclick="closeInstallModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
-       </div>
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative" onclick="event.stopPropagation()">
+            <button onclick="closeInstallModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl"><i class="fas fa-mobile-alt"></i></div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">安裝到手機桌面</h3>
+                <p class="text-sm text-gray-500 mb-6">像 App 一樣使用，方便又快速！</p>
+                <div id="iosInstall" class="hidden text-left bg-gray-50 p-4 rounded-lg border border-gray-100"><p class="text-sm text-gray-700 font-bold mb-2">👉 iOS 使用者：</p><ol class="list-decimal list-inside text-sm text-gray-600 space-y-2"><li>點擊下方 <strong class="text-blue-600"><i class="fas fa-share-square"></i> 分享</strong></li><li>點擊 <strong class="text-blue-600"><i class="fas fa-plus-square"></i> 加入主畫面</strong></li><li>點擊 <strong>新增</strong></li></ol></div>
+                <div id="androidInstall" class="hidden text-left bg-gray-50 p-4 rounded-lg border border-gray-100"><p class="text-sm text-gray-700 font-bold mb-2">👉 Android 使用者：</p><ol class="list-decimal list-inside text-sm text-gray-600 space-y-2"><li>點擊右上角 <strong class="text-blue-600"><i class="fas fa-ellipsis-v"></i> 選單</strong></li><li>點擊 <strong class="text-blue-600"><i class="fas fa-mobile-alt"></i> 加到主畫面</strong></li><li>點擊 <strong>新增</strong></li></ol></div>
+                <div id="pcInstall" class="hidden text-left bg-gray-50 p-4 rounded-lg border border-gray-100"><p class="text-sm text-gray-700 font-bold mb-2">👉 電腦版：</p><p class="text-sm text-gray-600">按 <kbd>Ctrl</kbd> + <kbd>D</kbd> 加入書籤。</p></div>
+            </div>
+        </div>
     </div>
 
-<script>
+    <script>
         // ============================================
-        // ⚠️ 請在這裡填入你的 GAS 網頁應用程式網址
+        // ⚠️ 請務必將下方網址更換為您自己的 GAS 部署網址 (結尾需為 /exec)
         // ============================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/您的-DEPLOYMENT-ID/exec"; 
 
         let currentBase64Array = []; 
         let loadingInterval = null;
@@ -227,10 +237,10 @@
         });
 
         // ============================================
-        //  API 呼叫函式 (已修復 async/await)
+        //  API 呼叫函式 (已完整修復語法錯誤)
         // ============================================
         async function callGAS(action, payload) {
-            if(!GAS_API_URL || GAS_API_URL.includes("你的-DEPLOYMENT-ID")) {
+            if(!GAS_API_URL || GAS_API_URL.includes("您的-DEPLOYMENT-ID")) {
                 alert("請先在程式碼中設定正確的 GAS_API_URL！");
                 throw new Error("API URL not set");
             }
@@ -243,11 +253,11 @@
 
             // 使用 POST 發送純文字 (text/plain) 以避免 CORS Preflight 問題
             const response = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: body,
+                method: 'POST',  // 逗號 ✅
+                body: body,      // 逗號 ✅
                 headers: {
                     "Content-Type": "text/plain;charset=utf-8", 
-                },
+                },               // 逗號 ✅
             });
 
             const json = await response.json();
