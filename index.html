@@ -163,7 +163,7 @@
         // ============================================
         // ⚠️ 重要：請在這裡填入你的 GAS 網頁應用程式網址
         // ============================================
-        const GAS_API_URL = "https://script.google.com/macros/s/你的-deployment-id/exec"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/execc"; 
 
         let currentBase64Array = []; 
         let loadingInterval = null;
@@ -230,7 +230,7 @@
         // ============================================
         async function callGAS(action, payload) {
             // 檢查是否已設定網址
-            if(!GAS_API_URL || GAS_API_URL.includes("https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec")) {
+            if(!GAS_API_URL || GAS_API_URL.includes("你的-deployment-id")) {
                 alert("請先修改 index.html 中的 GAS_API_URL 為您自己的 GAS 部署網址！");
                 throw new Error("API URL not set");
             }
