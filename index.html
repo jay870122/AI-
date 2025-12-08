@@ -54,14 +54,14 @@
             
             <div class="flex gap-3 w-full">
                 <label class="flex-1 cursor-pointer">
-                    <div class="bg-blue-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg flex flex-col items-center justify-center gap-1 h-full">
+                    <div class="bg-blue-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg hover:bg-blue-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-1 h-full">
                         <i class="fas fa-camera text-2xl"></i><span class="text-sm">立即拍照</span>
                     </div>
                     <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="window.handleFileSelect(event)">
                 </label>
 
                 <label class="flex-1 cursor-pointer">
-                    <div class="bg-green-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg flex flex-col items-center justify-center gap-1 h-full">
+                    <div class="bg-green-600 text-white font-bold py-3 px-2 rounded-xl shadow-lg hover:bg-green-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-1 h-full">
                         <i class="fas fa-images text-2xl"></i><span class="text-sm">從相簿選</span>
                     </div>
                     <input type="file" accept="image/*" multiple class="hidden" onchange="window.handleFileSelect(event)">
@@ -74,9 +74,21 @@
                 <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x"></div>
                 <p class="text-xs text-center text-gray-400 mt-1">點擊圖片可放大</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="document.getElementById('fileInput').click()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl">加拍</button>
-                <button onclick="window.analyzeImage()" class="flex-[2] bg-blue-600 text-white font-bold py-3 rounded-xl">開始分析</button>
+            
+            <div class="flex flex-col gap-2">
+                <div class="flex gap-2">
+                    <label class="flex-1 cursor-pointer bg-gray-200 text-gray-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
+                        <i class="fas fa-camera"></i> 加拍
+                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="window.handleFileSelect(event)">
+                    </label>
+                    <label class="flex-1 cursor-pointer bg-gray-200 text-gray-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
+                        <i class="fas fa-images"></i> 選圖
+                        <input type="file" accept="image/*" multiple class="hidden" onchange="window.handleFileSelect(event)">
+                    </label>
+                </div>
+                <button onclick="window.analyzeImage()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-sparkles"></i> 開始分析
+                </button>
             </div>
         </div>
 
@@ -204,7 +216,7 @@
                 const el = document.getElementById(id);
                 if(el) {
                     el.classList.add('hidden');
-                    el.style.display = ''; // ⚠️ 關鍵修正：清除所有卡住的 inline style
+                    el.style.display = ''; 
                 }
             });
             
@@ -219,7 +231,7 @@
             } else if (sectionName === 'loading') {
                 const loader = document.getElementById('loadingSection');
                 loader.classList.remove('hidden');
-                loader.style.display = 'flex'; // 只有這裡才加上 flex
+                loader.style.display = 'flex'; 
             }
         }
 
@@ -446,7 +458,7 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
-                history.pushState({view: 'result'}, '', '#result');
+                window.history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
             }
