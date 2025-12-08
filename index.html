@@ -45,10 +45,18 @@
         
         <div id="uploadSection" class="bg-white rounded-2xl shadow-sm p-6 text-center">
             <div class="mb-6">
-                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><i class="fas fa-camera text-4xl"></i></div>
-                <h2 class="text-lg font-bold text-gray-800 mb-2">拍下產品包裝</h2>
-                <p class="text-gray-500 text-sm">多圖問答版<br>拍完一張，可按「加拍」繼續拍下一張！</p>
-                <div class="mt-4 inline-block bg-blue-50 text-blue-600 text-xs px-3 py-1 rounded-full border border-blue-100"><i class="fas fa-user-circle mr-1"></i>目前帳號：<span id="homeUserId" class="font-bold">...</span></div>
+                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 shadow-sm"><i class="fas fa-camera text-4xl"></i></div>
+                
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">拍下產品包裝</h2>
+                
+                <div class="bg-gray-50 p-4 rounded-xl text-left border border-gray-100 mb-4">
+                    <p class="text-gray-600 text-sm mb-2"><i class="fas fa-language text-blue-500 mr-2"></i>看不懂日文/英文包裝？</p>
+                    <p class="text-gray-600 text-sm"><i class="fas fa-search text-blue-500 mr-2"></i>不知道成分或熱量？</p>
+                    <hr class="my-2 border-gray-200">
+                    <p class="text-gray-700 font-bold text-sm text-center">拍張照，AI 立刻幫你翻譯＋解說！</p>
+                </div>
+
+                <div class="mt-2 inline-block bg-blue-50 text-blue-600 text-xs px-3 py-1 rounded-full border border-blue-100"><i class="fas fa-user-circle mr-1"></i>目前帳號：<span id="homeUserId" class="font-bold">...</span></div>
             </div>
             
             <div class="flex gap-3 w-full">
@@ -145,7 +153,19 @@
                     </div>
                 </div>
             </div>
-            <div id="historyList" class="space-y-3 pb-10"></div>
+            
+            <div id="historyList" class="space-y-3 pb-4"></div>
+            
+            <div id="paginationControls" class="hidden flex justify-center items-center gap-4 mt-2 pb-10">
+                <button id="prevPageBtn" onclick="window.changePage(-1)" class="bg-white border border-gray-300 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-left"></i> 上一頁
+                </button>
+                <span id="pageIndicator" class="text-sm text-gray-600 font-mono">1</span>
+                <button id="nextPageBtn" onclick="window.changePage(1)" class="bg-white border border-gray-300 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    下一頁 <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
             <button onclick="window.resetApp()" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl mt-4">返回首頁</button>
         </div>
     </main>
@@ -186,6 +206,10 @@
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
         window.userId = ''; 
+        
+        // ⭐ 分頁變數
+        let currentPage = 1;
+        const itemsPerPage = 10;
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -229,7 +253,7 @@
                 else document.getElementById('uploadSection').classList.remove('hidden');
             } else if (sectionName === 'history') {
                 document.getElementById('historySection').classList.remove('hidden');
-                renderHistoryList();
+                renderHistoryList(); // 預設載入目前頁數
             } else if (sectionName === 'result') {
                 document.getElementById('resultSection').classList.remove('hidden');
             } else if (sectionName === 'loading') {
@@ -360,6 +384,7 @@
         }
 
         window.navigateToHistory = function() { 
+            // 每次進入歷史紀錄，不強制重設頁碼，保留使用者閱讀進度
             history.pushState({view: 'history'}, '', '#history');
             showSection('history');
         }
@@ -408,31 +433,23 @@
             }
         }
 
-        // ⭐ 新增：通用分享功能 (Web Share API)
         window.shareResult = function() {
             if (!currentProductContext || !currentProductContext.productName) {
                 alert("目前沒有內容可分享");
                 return;
             }
-            
-            // 組合分享文案 (不含網址)
             const text = `【AI 產品拍立解】\n\n📦 產品：${currentProductContext.productName}\n\n💡 懶人包：${currentProductContext.explanation}`;
             
-            // 優先使用手機系統分享
             if (navigator.share) {
-                navigator.share({
-                    title: 'AI 產品拍立解',
-                    text: text
-                }).catch(console.error);
+                navigator.share({ title: 'AI 產品拍立解', text: text }).catch(console.error);
             } else {
-                // 電腦版 Fallback: 複製到剪貼簿
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
                 document.body.appendChild(textarea);
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                alert("已複製分享文字！您可以貼到 LINE 或其他地方。");
+                alert("已複製分享文字！");
             }
         }
 
@@ -500,21 +517,37 @@
                 explanation: data.explanation, 
                 imageUrls: data.imageUrls || [data.imageUrl] 
             });
-            if (savedHistory.length > 20) savedHistory.pop();
+            // 雲端可以存很多，本地端也放寬限制，例如 50 筆
+            if (savedHistory.length > 50) savedHistory.pop();
             localStorage.setItem(STORAGE_KEY, JSON.stringify(savedHistory));
         }
 
+        // ⭐ 分頁核心邏輯
         window.renderHistoryList = function() {
             const list = document.getElementById('historyList');
+            const paginationControls = document.getElementById('paginationControls');
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            
             if (savedHistory.length === 0) {
                 list.innerHTML = '<div class="text-center py-10 text-gray-400">無紀錄</div>';
+                paginationControls.classList.add('hidden');
                 return;
             }
-            list.innerHTML = savedHistory.map((item, idx) => {
+
+            // 計算分頁
+            const totalPages = Math.ceil(savedHistory.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageItems = savedHistory.slice(start, end);
+
+            list.innerHTML = pageItems.map((item, idx) => {
+                const realIdx = start + idx; // 計算真實索引
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
-                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer" onclick="window.viewHistoryItem(${idx})">
+                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer hover:bg-gray-50 transition" onclick="window.viewHistoryItem(${realIdx})">
                     <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
                     <div class="flex-grow min-w-0">
                         <div class="font-bold text-gray-800 line-clamp-2 break-words mb-1">${item.productName}</div>
@@ -522,6 +555,24 @@
                     </div>
                 </div>`;
             }).join('');
+
+            // 更新分頁按鈕
+            if (totalPages > 1) {
+                paginationControls.classList.remove('hidden');
+                document.getElementById('pageIndicator').innerText = `${currentPage} / ${totalPages}`;
+                document.getElementById('prevPageBtn').disabled = (currentPage === 1);
+                document.getElementById('nextPageBtn').disabled = (currentPage === totalPages);
+            } else {
+                paginationControls.classList.add('hidden');
+            }
+        }
+
+        // ⭐ 換頁函式
+        window.changePage = function(delta) {
+            currentPage += delta;
+            renderHistoryList();
+            // 換頁後回到列表頂部
+            document.getElementById('historySection').scrollIntoView({ behavior: 'smooth' });
         }
 
         window.viewHistoryItem = function(idx) {
@@ -535,7 +586,7 @@
         }
 
         window.clearHistory = function() {
-            if(confirm("確定清空？")) { localStorage.removeItem(STORAGE_KEY); renderHistoryList(); }
+            if(confirm("確定清空？")) { localStorage.removeItem(STORAGE_KEY); currentPage = 1; renderHistoryList(); }
         }
 
         window.syncHistoryFromServer = async function() {
@@ -544,6 +595,8 @@
                 const serverHistory = await callGAS('getHistory', {});
                 if (serverHistory && serverHistory.length > 0) {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory));
+                    // 同步後重置回第一頁並刷新
+                    currentPage = 1; 
                     if (!document.getElementById('historySection').classList.contains('hidden')) { renderHistoryList(); }
                 }
             } catch (e) {
@@ -564,6 +617,7 @@
                         const serverHistory = await callGAS('getHistory', {});
                         if (serverHistory && serverHistory.length > 0) { 
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory)); 
+                            currentPage = 1; // 切換帳號後重置頁碼
                             renderHistoryList(); 
                             alert("同步成功！已載入 " + serverHistory.length + " 筆紀錄。"); 
                         } else { 
