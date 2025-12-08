@@ -25,9 +25,28 @@
         /* 文字斷行修正 */
         .break-words { word-wrap: break-word; word-break: break-word; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        /* 圖片預覽刪除按鈕 */
+        /* 圖片預覽刪除按鈕 (紅色) */
         .delete-btn { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 10; transition: transform 0.1s; }
         .delete-btn:active { transform: scale(0.9); }
+        /* 歷史紀錄刪除按鈕 (灰色圓底) - 修復跑版問題 */
+        .history-delete-btn { 
+            position: absolute; 
+            top: 8px; 
+            right: 8px; 
+            width: 32px; 
+            height: 32px; 
+            background-color: rgba(255, 255, 255, 0.9); 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #9ca3af; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+            z-index: 20; 
+            transition: all 0.2s; 
+        }
+        .history-delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
+        .history-delete-btn:active { transform: scale(0.9); }
     </style>
 </head>
 <body class="flex flex-col">
@@ -39,7 +58,10 @@
                 <button onclick="window.navigateToHistory()" class="text-white/90 hover:text-white transition p-1"><i class="fas fa-history text-lg"></i></button>
                 <h1 class="text-xl font-bold">AI 產品拍立解</h1>
             </div>
-            <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full"><i class="fas fa-redo"></i> 重來</button>
+            <!-- ⭐ 修改：回首頁按鈕 -->
+            <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition shadow-sm">
+                <i class="fas fa-home"></i> 回首頁
+            </button>
         </div>
     </header>
 
@@ -132,6 +154,7 @@
                 <p id="resExplanation" class="text-gray-800"></p>
             </div>
 
+            <!-- 通用分享按鈕 -->
             <button onclick="window.shareResult()" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2 active:scale-95">
                 <i class="fas fa-share-alt text-xl"></i> 分享結果
             </button>
@@ -568,9 +591,10 @@
                 const realIdx = start + idx;
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
-                // ⭐ 新增：單筆刪除按鈕與雲端刪除呼叫
-                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer hover:bg-gray-50 transition relative group" onclick="window.viewHistoryItem(${realIdx})">
-                    <button onclick="window.deleteHistoryItem(${realIdx}, event)" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-2 z-10 transition-colors" title="刪除此紀錄">
+                // ⭐ 修改：卡片容器加上 relative 和 overflow-hidden，確保垃圾桶不會跑出去
+                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer hover:bg-gray-50 transition relative overflow-hidden group" onclick="window.viewHistoryItem(${realIdx})">
+                    <!-- ⭐ 修改：使用新的 history-delete-btn 樣式 -->
+                    <button onclick="window.deleteHistoryItem(${realIdx}, event)" class="history-delete-btn" title="刪除此紀錄">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                     <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
@@ -591,7 +615,6 @@
             }
         }
 
-        // ⭐ 新增：單筆刪除功能 (含雲端刪除)
         window.deleteHistoryItem = async function(index, event) {
             event.stopPropagation();
             if(!confirm("確定要永久刪除這筆紀錄嗎？(包含雲端檔案)")) return;
@@ -599,24 +622,20 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             const item = savedHistory[index];
             
-            // 變更按鈕圖示為 loading
             const btn = event.currentTarget;
             const originalIcon = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin text-gray-400"></i>';
             btn.disabled = true;
 
             try {
-                // 呼叫雲端刪除 (不論成功與否都刪除本地，避免卡住)
                 await callGAS('delete', { timestamp: item.timestamp });
             } catch(e) {
                 console.error("雲端刪除失敗", e);
             }
 
-            // 刪除本地
             savedHistory.splice(index, 1);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(savedHistory));
             
-            // 如果當前頁面變空了，往前跳一頁
             const totalPages = Math.ceil(savedHistory.length / itemsPerPage);
             if (currentPage > totalPages && currentPage > 1) currentPage--;
             
