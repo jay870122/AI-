@@ -29,18 +29,18 @@
         .delete-btn { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 10; transition: transform 0.1s; }
         .delete-btn:active { transform: scale(0.9); }
         
-        /* ⭐ 修正：歷史紀錄刪除按鈕 (改用 Flex 佈局，不再使用 Absolute) */
+        /* 歷史紀錄刪除按鈕 */
         .history-delete-btn { 
             width: 36px; 
             height: 36px; 
-            background-color: #f3f4f6; /* 淺灰底 */
+            background-color: #f3f4f6; 
             border-radius: 50%; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             color: #9ca3af; 
-            flex-shrink: 0; /* 防止被擠壓 */
-            margin-left: 8px; /* 與文字的距離 */
+            flex-shrink: 0; 
+            margin-left: 8px; 
             transition: all 0.2s; 
         }
         .history-delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
@@ -56,7 +56,7 @@
                 <button onclick="window.navigateToHistory()" class="text-white/90 hover:text-white transition p-1"><i class="fas fa-history text-lg"></i></button>
                 <h1 class="text-xl font-bold">AI 產品拍立解</h1>
             </div>
-            <!-- ⭐ 回首頁按鈕 -->
+            <!-- 回首頁按鈕 -->
             <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-blue-800 transition shadow-sm">
                 <i class="fas fa-home"></i> 回首頁
             </button>
@@ -70,7 +70,6 @@
             <div class="mb-6">
                 <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 shadow-sm"><i class="fas fa-camera text-4xl"></i></div>
                 
-                <!-- 標題與解說區塊 -->
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">拍下產品包裝</h2>
                 
                 <div class="bg-gray-50 p-4 rounded-xl text-left border border-gray-100 mb-4">
@@ -135,6 +134,7 @@
 
         <!-- 結果區 (ID: resultSection) -->
         <div id="resultSection" class="hidden space-y-4 pb-10">
+            <!-- 返回按鈕 -->
             <button onclick="window.history.back()" class="mb-3 text-blue-600 font-bold flex items-center"><i class="fas fa-chevron-left mr-1"></i> 返回</button>
             <div id="saveStatusMsg" class="hidden p-3 rounded-lg text-sm mb-4"></div>
             <div id="resultImageContainer" class="hidden mb-4"></div>
@@ -236,6 +236,8 @@
         let currentBase64Array = []; 
         let loadingInterval = null;
         let currentProductContext = {}; 
+        let sessionImages = []; // ⭐ 新增：用於快取本次分析的圖片 (為了聊天和結果顯示)
+        
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
         window.userId = ''; 
@@ -422,6 +424,7 @@
 
         window.resetApp = function() {
             currentBase64Array = []; 
+            sessionImages = []; // ⭐ 重置時也清空 session
             document.getElementById('previewContainer').innerHTML = ''; 
             if (loadingInterval) clearInterval(loadingInterval);
             history.pushState({view: 'home'}, '', '#home');
@@ -445,7 +448,6 @@
             progressBar.style.width = '0%';
             
             const imageCount = currentBase64Array.length || 1;
-            // 基礎分母：越多張圖，分母越大，進度跑越慢 (預設 80，每多一張加 30)
             const speedDivisor = 80 + (imageCount * 30); 
 
             if (loadingInterval) clearInterval(loadingInterval);
@@ -466,6 +468,13 @@
 
             try {
                 const result = await callGAS('analyze', { base64DataList: currentBase64Array.map(b => b.split(',')[1]) });
+                
+                // ⭐ 成功後，將圖片轉存到 sessionImages，並清空 currentBase64Array
+                sessionImages = [...currentBase64Array];
+                currentBase64Array = [];
+                document.getElementById('previewContainer').innerHTML = '';
+                document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+
                 clearInterval(loadingInterval);
                 progressBar.style.width = '100%';
                 loadingTitle.innerText = "分析完成！";
@@ -514,7 +523,9 @@
             container.classList.remove('hidden');
             container.className = "flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x mb-4";
             
-            const images = data.imageUrls || (data.imageUrl ? [data.imageUrl] : currentBase64Array);
+            // ⭐ 優先使用回傳的 URL，若無則使用 sessionImages 或 currentBase64Array
+            const images = data.imageUrls || (data.imageUrl ? [data.imageUrl] : (sessionImages.length > 0 ? sessionImages : currentBase64Array));
+            
             images.forEach((src) => {
                 const div = document.createElement('div');
                 div.className = "w-64 h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm snap-center relative flex-shrink-0 bg-gray-100";
@@ -543,11 +554,14 @@
             chat.innerHTML += `<div id="${loadId}" class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-400">...</div></div>`;
             chat.scrollTop = chat.scrollHeight;
 
+            // ⭐ 使用 sessionImages (剛拍的) 或空值 (歷史紀錄)
+            const imgsToSend = (sessionImages.length > 0) ? sessionImages.map(b => b.split(',')[1]) : null;
+
             try {
                 const res = await callGAS('chat', { 
                     question: q, 
                     productContext: currentProductContext, 
-                    base64DataList: currentBase64Array.map(b => b.split(',')[1]) 
+                    base64DataList: imgsToSend 
                 });
                 document.getElementById(loadId).remove();
                 chat.innerHTML += `<div class="flex gap-2 mb-2"><div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl border border-gray-100 text-gray-800">${res.reply}</div></div>`;
@@ -590,7 +604,6 @@
             const end = start + itemsPerPage;
             const pageItems = savedHistory.slice(start, end);
 
-            // ⭐ 修正：使用 Flex 佈局，將圖片+文字放左邊，按鈕放右邊
             list.innerHTML = pageItems.map((item, idx) => {
                 const realIdx = start + idx;
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
@@ -603,7 +616,6 @@
                             <div class="text-xs text-gray-400">${date}</div>
                         </div>
                     </div>
-                    <!-- 按鈕改為 Flex 佈局，不再 Absolute -->
                     <button onclick="window.deleteHistoryItem(${realIdx}, event)" class="history-delete-btn" title="刪除此紀錄">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -657,6 +669,7 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
+                sessionImages = []; // 歷史紀錄不支援圖片對話 (除非重新下載，這裡簡化處理)
                 window.history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
