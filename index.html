@@ -6,16 +6,18 @@
     <title>AI 產品拍立解</title>
     
     <link rel="icon" type="image/png" href="https://i.meee.com.tw/S9sSQna.png">
+    <link rel="apple-touch-icon" href="https://i.meee.com.tw/S9sSQna.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         html { height: auto; min-height: 100%; overflow-y: auto; touch-action: manipulation; }
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; min-height: 100vh; position: relative; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         .chat-loader { width: 8px; height: 8px; background-color: #9ca3af; border-radius: 50%; animation: chat-dot 1.4s infinite ease-in-out both; display: inline-block; margin: 0 2px; }
         .chat-loader:nth-child(1) { animation-delay: -0.32s; }
         .chat-loader:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes chat-dot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         /* 強制 Lightbox 層級最高 */
         #imageModal { z-index: 2147483647 !important; }
         .cursor-pointer { cursor: pointer; }
@@ -115,7 +117,11 @@
                 <p id="resExplanation" class="text-gray-800"></p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-6">
+            <button onclick="window.shareResult()" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2 active:scale-95">
+                <i class="fas fa-share-alt text-xl"></i> 分享結果
+            </button>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-2">
                 <div class="bg-purple-600 text-white p-3 font-bold text-sm">問問 AI</div>
                 <div id="chatHistory" class="p-4 space-y-4 max-h-[300px] overflow-y-auto bg-gray-50 text-sm"></div>
                 <div class="p-3 bg-white border-t flex gap-2">
@@ -165,7 +171,7 @@
 
     <script>
         // =========================================================================
-        // ⭐⭐⭐ 網址設定區 (請小心修改引號內的網址) ⭐⭐⭐
+        // ⭐⭐⭐ 網址設定區 ⭐⭐⭐
         // =========================================================================
         
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec"; 
@@ -181,7 +187,6 @@
         const USER_ID_KEY = 'ai_product_user_id';
         window.userId = ''; 
 
-        // 初始化
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const urlUserId = urlParams.get('uid');
@@ -209,7 +214,6 @@
             history.replaceState({view: 'home'}, '', window.location.pathname);
         });
 
-        // 核心：畫面切換 (含強力清除樣式)
         function showSection(sectionName) {
             const sections = ['uploadSection', 'previewSection', 'loadingSection', 'resultSection', 'historySection'];
             sections.forEach(id => {
@@ -247,16 +251,12 @@
             currentBase64Array.forEach((base64, index) => {
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200 group";
-                
                 div.innerHTML = `<img src="${base64}" class="w-full h-full object-cover cursor-pointer" onclick="window.openImageModal(this.src)">`;
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = "delete-btn";
                 deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
-                deleteBtn.onclick = function(e) {
-                    e.stopPropagation(); 
-                    window.deleteImage(index);
-                };
+                deleteBtn.onclick = function(e) { e.stopPropagation(); window.deleteImage(index); };
                 
                 const badge = document.createElement('div');
                 badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
@@ -266,7 +266,6 @@
                 div.appendChild(badge);
                 container.appendChild(div);
             });
-            
             setTimeout(() => { container.scrollLeft = container.scrollWidth; }, 100);
             showSection('home'); 
         }
@@ -305,10 +304,6 @@
         }
 
         async function callGAS(action, payload) {
-            if(!GAS_API_URL || GAS_API_URL.includes("您的-DEPLOYMENT-ID")) {
-                alert("請設定正確的 GAS 網址！");
-                throw new Error("API URL error");
-            }
             const body = JSON.stringify({ action: action, userId: window.userId, ...payload });
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',  
@@ -330,7 +325,6 @@
         window.handleFileSelect = async function(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-
             const promises = Array.from(files).map(file => {
                 return new Promise((resolve) => {
                     const reader = new FileReader();
@@ -340,9 +334,7 @@
                             const canvas = document.createElement('canvas');
                             let w = img.width, h = img.height;
                             const max = 1024;
-                            if (w > max || h > max) {
-                                if (w > h) { h *= max / w; w = max; } else { w *= max / h; h = max; }
-                            }
+                            if (w > max || h > max) { if (w > h) { h *= max / w; w = max; } else { w *= max / h; h = max; } }
                             canvas.width = w; canvas.height = h;
                             canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                             resolve(canvas.toDataURL('image/jpeg', 0.7));
@@ -352,7 +344,6 @@
                     reader.readAsDataURL(file);
                 });
             });
-
             const newImages = await Promise.all(promises);
             currentBase64Array = currentBase64Array.concat(newImages);
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
@@ -373,22 +364,18 @@
             showSection('history');
         }
 
-        // ⭐ 進度條邏輯修正
         window.analyzeImage = async function() {
             if (currentBase64Array.length === 0) return;
             showSection('loading');
             
-            // 變數初始化
             const progressBar = document.getElementById('progressBar');
             const loadingTitle = document.getElementById('loadingTitle');
             const loadingText = document.getElementById('loadingText');
             let progress = 0;
             progressBar.style.width = '0%';
             
-            // 模擬進度條 (非線性增長)
             if (loadingInterval) clearInterval(loadingInterval);
             loadingInterval = setInterval(() => {
-                // 每次增加一點點，但越接近 90% 越慢，永遠不到 100% 直到回應
                 if (progress < 90) {
                     let increment = (95 - progress) / 30; 
                     if (increment < 0.2) increment = 0.2;
@@ -396,42 +383,56 @@
                 }
                 progressBar.style.width = `${progress}%`;
                 
-                // 更新文字提示
-                if (progress < 30) {
-                    loadingTitle.innerText = "正在上傳照片...";
-                    loadingText.innerText = "將您的照片安全傳送至雲端...";
-                } else if (progress < 60) {
-                    loadingTitle.innerText = "AI 正在思考中...";
-                    loadingText.innerText = "辨識包裝特徵、文字與成分...";
-                } else if (progress < 85) {
-                    loadingTitle.innerText = "正在翻譯與撰寫...";
-                    loadingText.innerText = "將複雜資訊轉為繁體中文懶人包...";
-                } else {
-                    loadingTitle.innerText = "即將完成...";
-                    loadingText.innerText = "正在整理最終結果...";
-                }
+                if (progress < 30) { loadingTitle.innerText = "正在上傳照片..."; loadingText.innerText = "將您的照片安全傳送至雲端..."; } 
+                else if (progress < 60) { loadingTitle.innerText = "AI 正在思考中..."; loadingText.innerText = "辨識包裝特徵、文字與成分..."; } 
+                else if (progress < 85) { loadingTitle.innerText = "正在翻譯與撰寫..."; loadingText.innerText = "將複雜資訊轉為繁體中文懶人包..."; } 
+                else { loadingTitle.innerText = "即將完成..."; loadingText.innerText = "正在整理最終結果..."; }
             }, 100);
 
             try {
                 const result = await callGAS('analyze', { base64DataList: currentBase64Array.map(b => b.split(',')[1]) });
-                
-                // 成功後瞬間填滿
                 clearInterval(loadingInterval);
                 progressBar.style.width = '100%';
                 loadingTitle.innerText = "分析完成！";
                 loadingText.innerText = "正在顯示結果...";
                 
-                // 稍微停頓一下讓使用者看到 100%
                 setTimeout(() => {
                     history.pushState({view: 'result'}, '', '#result');
                     renderResult(result); 
                     saveToHistory(result);
                 }, 400);
-
             } catch (error) {
                 clearInterval(loadingInterval);
                 alert("錯誤：" + error.message);
                 showSection('home');
+            }
+        }
+
+        // ⭐ 新增：通用分享功能 (Web Share API)
+        window.shareResult = function() {
+            if (!currentProductContext || !currentProductContext.productName) {
+                alert("目前沒有內容可分享");
+                return;
+            }
+            
+            // 組合分享文案 (不含網址)
+            const text = `【AI 產品拍立解】\n\n📦 產品：${currentProductContext.productName}\n\n💡 懶人包：${currentProductContext.explanation}`;
+            
+            // 優先使用手機系統分享
+            if (navigator.share) {
+                navigator.share({
+                    title: 'AI 產品拍立解',
+                    text: text
+                }).catch(console.error);
+            } else {
+                // 電腦版 Fallback: 複製到剪貼簿
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert("已複製分享文字！您可以貼到 LINE 或其他地方。");
             }
         }
 
