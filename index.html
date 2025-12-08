@@ -20,6 +20,13 @@
         /* 強制 Lightbox 層級最高 */
         #imageModal { z-index: 2147483647 !important; }
         .cursor-pointer { cursor: pointer; }
+        /* 文字超過兩行省略 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="flex flex-col">
@@ -41,7 +48,7 @@
                 <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><i class="fas fa-camera text-4xl"></i></div>
                 <h2 class="text-lg font-bold text-gray-800 mb-2">拍下產品包裝</h2>
                 <p class="text-gray-500 text-sm">多圖問答版<br>拍完一張，可按「加拍」繼續拍下一張！</p>
-                <div class="mt-4 text-xs text-gray-400">ID: <span id="homeUserId">...</span></div>
+                <div class="mt-4 inline-block bg-blue-50 text-blue-600 text-xs px-3 py-1 rounded-full border border-blue-100"><i class="fas fa-user-circle mr-1"></i>目前帳號：<span id="homeUserId" class="font-bold">...</span></div>
             </div>
             
             <div class="flex gap-3 w-full">
@@ -112,10 +119,10 @@
             </div>
             <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-100">
                 <div class="flex justify-between items-center mb-2">
-                    <div class="text-blue-800">ID: <span id="displayUserId" class="font-mono font-bold">...</span></div>
-                    <div class="flex gap-2">
-                        <button onclick="window.copyShareLink()" class="bg-white text-blue-600 border border-blue-200 px-2 py-1 rounded">複製連結</button>
-                        <button onclick="window.switchUser()" class="bg-white text-blue-600 border border-blue-200 px-2 py-1 rounded">切換</button>
+                    <div class="text-blue-800 overflow-hidden">ID: <span id="displayUserId" class="font-mono font-bold">...</span></div>
+                    <div class="flex-shrink-0 flex gap-2">
+                        <button onclick="window.copyShareLink()" class="bg-white text-blue-600 border border-blue-200 px-2 py-1 rounded text-xs whitespace-nowrap">複製連結</button>
+                        <button onclick="window.switchUser()" class="bg-white text-blue-600 border border-blue-200 px-2 py-1 rounded text-xs whitespace-nowrap">切換</button>
                     </div>
                 </div>
             </div>
@@ -155,61 +162,48 @@
         let currentProductContext = {}; 
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
-        let userId = '';
+        // ⚠️ 重要修正：全域變數先宣告，不要在 function 內重複宣告 let userId
+        window.userId = ''; 
 
         // 頁面載入初始化
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const urlUserId = urlParams.get('uid');
             
+            // ⚠️ 修正：這裡直接更新 window.userId，不加 let
             if (urlUserId && urlUserId.trim() !== "") {
-                userId = urlUserId.replace(/[<>"'/\\`]/g, '');
-                localStorage.setItem(USER_ID_KEY, userId);
+                window.userId = urlUserId.replace(/[<>"'/\\`]/g, '');
+                localStorage.setItem(USER_ID_KEY, window.userId);
             } else {
-                userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
-                localStorage.setItem(USER_ID_KEY, userId);
+                window.userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
+                localStorage.setItem(USER_ID_KEY, window.userId);
             }
-            window.userId = userId;
             
             updateUserInfoDisplay();
             
-            // 處理瀏覽器上一頁/下一頁 (Back Button Fix)
             window.onpopstate = function(event) {
                 if (event.state) {
-                    if (event.state.view === 'history') {
-                        showSection('history');
-                    } else if (event.state.view === 'home') {
-                        showSection('home');
-                    } else if (event.state.view === 'result') {
-                        // 如果有結果資料就顯示，沒有就回首頁
+                    if (event.state.view === 'history') showSection('history');
+                    else if (event.state.view === 'home') showSection('home');
+                    else if (event.state.view === 'result') {
                         const resSection = document.getElementById('resultSection');
-                        if (resSection.classList.contains('hidden')) {
-                            showSection('home');
-                        } else {
-                            showSection('result');
-                        }
+                        resSection.classList.contains('hidden') ? showSection('home') : showSection('result');
                     }
                 } else {
-                    // 預設回首頁
                     showSection('home');
                 }
             };
             
-            // 初始狀態
             history.replaceState({view: 'home'}, '', window.location.pathname);
         });
 
-        // 畫面切換 helper
         function showSection(sectionName) {
             const sections = ['uploadSection', 'previewSection', 'loadingSection', 'resultSection', 'historySection'];
             sections.forEach(id => document.getElementById(id).classList.add('hidden'));
             
             if (sectionName === 'home') {
-                if (currentBase64Array.length > 0) {
-                    document.getElementById('previewSection').classList.remove('hidden');
-                } else {
-                    document.getElementById('uploadSection').classList.remove('hidden');
-                }
+                if (currentBase64Array.length > 0) document.getElementById('previewSection').classList.remove('hidden');
+                else document.getElementById('uploadSection').classList.remove('hidden');
             } else if (sectionName === 'history') {
                 document.getElementById('historySection').classList.remove('hidden');
                 renderHistoryList();
@@ -221,20 +215,13 @@
             }
         }
 
-        // ============================================
-        //  圖片放大功能 (最穩定的寫法)
-        // ============================================
         window.openImageModal = function(src) {
             const modal = document.getElementById('imageModal');
             const img = document.getElementById('modalImage');
             if (!modal || !img) return;
-            
             img.src = src; 
             modal.style.display = 'flex';
-            
-            // 強制 Reflow 後再加 opacity，確保 transition 運作
             void modal.offsetWidth; 
-            
             modal.classList.remove('opacity-0');
             img.classList.remove('scale-95');
             img.classList.add('scale-100');
@@ -245,13 +232,8 @@
             const modal = document.getElementById('imageModal');
             const img = document.getElementById('modalImage');
             if (!modal) return;
-
             modal.classList.add('opacity-0');
-            if(img) {
-                img.classList.remove('scale-100');
-                img.classList.add('scale-95');
-            }
-            
+            if(img) { img.classList.remove('scale-100'); img.classList.add('scale-95'); }
             setTimeout(() => { 
                 modal.style.display = 'none'; 
                 if(img) img.src = ''; 
@@ -259,9 +241,6 @@
             }, 300);
         }
 
-        // ============================================
-        //  API 呼叫
-        // ============================================
         async function callGAS(action, payload) {
             if(!GAS_API_URL || GAS_API_URL.includes("您的-DEPLOYMENT-ID")) {
                 alert("請設定正確的 GAS 網址！");
@@ -278,12 +257,11 @@
             return json;
         }
 
-        // ============================================
-        //  應用邏輯
-        // ============================================
         window.updateUserInfoDisplay = function() {
-            document.getElementById('homeUserId').innerText = window.userId;
-            document.getElementById('displayUserId').innerText = window.userId;
+            const el1 = document.getElementById('homeUserId');
+            const el2 = document.getElementById('displayUserId');
+            if (el1) el1.innerText = window.userId;
+            if (el2) el2.innerText = window.userId;
         }
 
         window.handleFileSelect = async function(event) {
@@ -319,20 +297,16 @@
             newImages.forEach((base64, index) => {
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200";
-                
-                // 使用 onclick 直接綁定，不透過 addEventListener
                 div.innerHTML = `<img src="${base64}" class="w-full h-full object-cover cursor-pointer" onclick="window.openImageModal(this.src)">`;
-                
                 const badge = document.createElement('div');
                 badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
                 badge.innerText = startIndex + index + 1;
                 div.appendChild(badge);
-                
                 document.getElementById('previewContainer').appendChild(div);
             });
             
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
-            showSection('home'); // 其實還是 home，只是顯示預覽區
+            showSection('home');
         }
 
         window.resetApp = function() {
@@ -352,7 +326,6 @@
         window.analyzeImage = async function() {
             if (currentBase64Array.length === 0) return;
             showSection('loading');
-            
             let step = 0;
             const steps = ["處理影像...", "AI 分析中...", "翻譯成中文...", "整理結果..."];
             loadingInterval = setInterval(() => {
@@ -363,7 +336,6 @@
             try {
                 const result = await callGAS('analyze', { base64DataList: currentBase64Array.map(b => b.split(',')[1]) });
                 clearInterval(loadingInterval);
-                
                 history.pushState({view: 'result'}, '', '#result');
                 renderResult(result); 
                 saveToHistory(result);
@@ -376,13 +348,10 @@
 
         window.renderResult = function(data) {
             currentProductContext = data;
-            
-            // 設定文字
             document.getElementById('resName').innerText = data.productName || "未知";
             document.getElementById('resTranslation').innerText = data.translation || "無";
             document.getElementById('resExplanation').innerText = data.explanation || "無";
             
-            // 設定圖片
             const container = document.getElementById('resultImageContainer');
             container.innerHTML = '';
             container.classList.remove('hidden');
@@ -396,9 +365,7 @@
                 container.appendChild(div);
             });
 
-            // 初始化聊天
             document.getElementById('chatHistory').innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">有問題歡迎問我！</div></div>';
-            
             showSection('result');
             window.scrollTo(0, 0);
         }
@@ -454,12 +421,16 @@
                 list.innerHTML = '<div class="text-center py-10 text-gray-400">無紀錄</div>';
                 return;
             }
+            // ⚠️ 修正：加入 min-w-0 和 line-clamp-2 解決文字溢出
             list.innerHTML = history.map((item, idx) => {
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
                 return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer" onclick="window.viewHistoryItem(${idx})">
                     <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
-                    <div><div class="font-bold text-gray-800 truncate">${item.productName}</div><div class="text-xs text-gray-400">${date}</div></div>
+                    <div class="flex-grow min-w-0">
+                        <div class="font-bold text-gray-800 line-clamp-2 break-all mb-1" style="word-break: break-all;">${item.productName}</div>
+                        <div class="text-xs text-gray-400">${date}</div>
+                    </div>
                 </div>`;
             }).join('');
         }
@@ -467,15 +438,63 @@
         window.viewHistoryItem = function(idx) {
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (history[idx]) {
-                currentBase64Array = []; // 歷史紀錄不支援再問圖片問題，除非重新下載
-                window.history.pushState({view: 'result'}, '', '#result');
-                renderResult(history[idx]);
-                document.getElementById('saveStatusMsg').classList.add('hidden');
+                currentBase64Array = []; 
+                history.pushState({view: 'result'}, '', '#result');
+                showSection('result'); // 這裡記得要切換
+                renderResult(history[idx], true);
             }
         }
 
         window.clearHistory = function() {
             if(confirm("確定清空？")) { localStorage.removeItem(STORAGE_KEY); renderHistoryList(); }
+        }
+
+        window.syncHistoryFromServer = async function() {
+            console.log("正在同步資料...");
+            try {
+                const serverHistory = await callGAS('getHistory', {});
+                if (serverHistory && serverHistory.length > 0) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory));
+                    if (!document.getElementById('historySection').classList.contains('hidden')) { renderHistoryList(); }
+                }
+            } catch (e) {
+                console.error("同步失敗", e);
+            }
+        }
+
+        window.switchUser = async function() {
+            const newId = prompt("請輸入帳號 ID (建議設為 Mom, Me 等簡單名稱)\n\n若該 ID 已有雲端紀錄，將自動同步。", window.userId);
+            if (newId && newId.trim() !== "") {
+                if (confirm("即將切換至帳號: " + newId + "\n這將會清除目前的畫面並從雲端載入該帳號的紀錄。")) {
+                    window.userId = newId.trim(); 
+                    localStorage.setItem(USER_ID_KEY, window.userId); 
+                    updateUserInfoDisplay();
+                    document.getElementById('historyList').innerHTML = '<div class="text-center py-10"><div class="loader mx-auto mb-2"></div><p class="text-gray-400">正在雲端同步資料...</p></div>';
+                    
+                    try {
+                        const serverHistory = await callGAS('getHistory', {});
+                        if (serverHistory && serverHistory.length > 0) { 
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory)); 
+                            renderHistoryList(); 
+                            alert("同步成功！已載入 " + serverHistory.length + " 筆紀錄。"); 
+                        } else { 
+                            localStorage.setItem(STORAGE_KEY, '[]'); 
+                            renderHistoryList(); 
+                            alert("切換成功！此帳號目前沒有雲端紀錄。"); 
+                        }
+                    } catch (err) {
+                        alert("同步失敗：" + err.message);
+                        renderHistoryList();
+                    }
+                }
+            }
+        }
+
+        window.copyShareLink = function() {
+            const currentUrl = window.location.href.split('?')[0];
+            const shareUrl = currentUrl + '?uid=' + window.userId;
+            const el = document.createElement('textarea'); el.value = shareUrl; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+            alert("連結已複製！\n您可以將此連結傳給他人，對方開啟後將會自動登入此帳號。");
         }
 
         window.showInstallPrompt = function() {
@@ -484,8 +503,8 @@
             else if (ua.indexOf('android') > -1) document.getElementById('androidInstall').classList.remove('hidden');
             document.getElementById('installModal').classList.remove('hidden');
         }
-        
-        window.closeInstallModal = function() { document.getElementById('installModal').classList.add('hidden'); }
+        window.closeInstallModal = function() { installModal.classList.add('opacity-0'); setTimeout(() => { installModal.classList.add('hidden'); document.getElementById('iosInstall').classList.add('hidden'); document.getElementById('androidInstall').classList.add('hidden'); document.getElementById('pcInstall').classList.add('hidden'); }, 200); }
+
     </script>
 </body>
 </html>
