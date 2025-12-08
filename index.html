@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 產品拍立解</title>
     
+    <!-- Icon 設定 -->
     <link rel="icon" type="image/png" href="https://i.meee.com.tw/S9sSQna.png">
     <link rel="apple-touch-icon" href="https://i.meee.com.tw/S9sSQna.png">
 
@@ -24,12 +25,13 @@
         /* 文字斷行修正 */
         .break-words { word-wrap: break-word; word-break: break-word; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        /* 刪除按鈕樣式 */
+        /* 圖片預覽刪除按鈕 */
         .delete-btn { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 10; transition: transform 0.1s; }
         .delete-btn:active { transform: scale(0.9); }
     </style>
 </head>
 <body class="flex flex-col">
+    <!-- 標題列 -->
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -43,10 +45,12 @@
 
     <main class="flex-grow p-4 max-w-md mx-auto w-full pb-20">
         
+        <!-- 上傳區 (ID: uploadSection) -->
         <div id="uploadSection" class="bg-white rounded-2xl shadow-sm p-6 text-center">
             <div class="mb-6">
                 <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 shadow-sm"><i class="fas fa-camera text-4xl"></i></div>
                 
+                <!-- 標題與解說區塊 -->
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">拍下產品包裝</h2>
                 
                 <div class="bg-gray-50 p-4 rounded-xl text-left border border-gray-100 mb-4">
@@ -76,6 +80,7 @@
             </div>
         </div>
 
+        <!-- 預覽區 (ID: previewSection) -->
         <div id="previewSection" class="hidden space-y-4">
             <div class="bg-gray-100 rounded-xl p-2 relative">
                 <div id="previewContainer" class="flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x min-h-[128px]"></div>
@@ -99,6 +104,7 @@
             </div>
         </div>
 
+        <!-- 進度條區 (ID: loadingSection) -->
         <div id="loadingSection" class="hidden flex-col items-center justify-center py-10 text-center px-6">
             <div class="w-full bg-gray-200 rounded-full h-4 mb-3 overflow-hidden shadow-inner">
                 <div id="progressBar" class="bg-blue-600 h-4 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
@@ -107,6 +113,7 @@
             <p class="text-gray-500 text-sm" id="loadingText">準備開始分析...</p>
         </div>
 
+        <!-- 結果區 (ID: resultSection) -->
         <div id="resultSection" class="hidden space-y-4 pb-10">
             <button onclick="window.history.back()" class="mb-3 text-blue-600 font-bold flex items-center"><i class="fas fa-chevron-left mr-1"></i> 返回</button>
             <div id="saveStatusMsg" class="hidden p-3 rounded-lg text-sm mb-4"></div>
@@ -139,10 +146,11 @@
             </div>
         </div>
 
+        <!-- 歷史紀錄 (ID: historySection) -->
         <div id="historySection" class="hidden animate-fade-in">
             <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
                 <h2 class="text-lg font-bold text-gray-800">歷史紀錄</h2>
-                <button onclick="window.clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded">清空</button>
+                <button onclick="window.clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded">清空全部</button>
             </div>
             <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-100">
                 <div class="flex justify-between items-center mb-2">
@@ -154,8 +162,10 @@
                 </div>
             </div>
             
+            <!-- 歷史紀錄列表 -->
             <div id="historyList" class="space-y-3 pb-4"></div>
             
+            <!-- 分頁導航 -->
             <div id="paginationControls" class="hidden flex justify-center items-center gap-4 mt-2 pb-10">
                 <button id="prevPageBtn" onclick="window.changePage(-1)" class="bg-white border border-gray-300 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-chevron-left"></i> 上一頁
@@ -170,6 +180,7 @@
         </div>
     </main>
 
+    <!-- Lightbox -->
     <div id="imageModal" style="display: none;" class="fixed inset-0 bg-black/95 flex items-center justify-center p-2 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="window.closeImageModal()">
         <button onclick="window.closeImageModal()" class="absolute top-4 right-4 z-[10000] text-white bg-gray-800/50 rounded-full w-12 h-12 flex items-center justify-center">
             <i class="fas fa-times text-2xl"></i>
@@ -177,6 +188,7 @@
         <img id="modalImage" class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl scale-95 transition-transform duration-300" src="" alt="Full size" onclick="event.stopPropagation()">
     </div>
     
+    <!-- 安裝提示 -->
     <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onclick="window.closeInstallModal()">
         <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative" onclick="event.stopPropagation()">
             <button onclick="window.closeInstallModal()" class="absolute top-3 right-3 text-gray-400"><i class="fas fa-times text-xl"></i></button>
@@ -207,7 +219,6 @@
         const USER_ID_KEY = 'ai_product_user_id';
         window.userId = ''; 
         
-        // 分頁變數
         let currentPage = 1;
         const itemsPerPage = 10;
 
@@ -225,34 +236,26 @@
             
             updateUserInfoDisplay();
             
-            // ⭐ 狀態恢復邏輯：根據網址 Hash 決定顯示哪個畫面
             if (window.location.hash === '#history') {
                 showSection('history');
             } else if (window.location.hash === '#result') {
-                // 如果在結果頁重整，因為資料已清空，強制回首頁比較安全
                 showSection('home'); 
                 history.replaceState({view: 'home'}, '', '#home');
             } else {
                 showSection('home');
             }
 
-            // 處理瀏覽器上下頁按鈕
             window.onpopstate = function(event) {
                 if (event.state) {
                     if (event.state.view === 'history') showSection('history');
                     else if (event.state.view === 'home') showSection('home');
                     else if (event.state.view === 'result') {
-                        // 檢查是否有資料顯示，沒有就回首頁
                         const resSection = document.getElementById('resultSection');
                         const hasContent = document.getElementById('resName').innerText !== "";
-                        if (hasContent) {
-                            showSection('result');
-                        } else {
-                            showSection('home');
-                        }
+                        if (hasContent) showSection('result');
+                        else showSection('home');
                     }
                 } else {
-                    // Fallback
                     const hash = window.location.hash;
                     if(hash === '#history') showSection('history');
                     else showSection('home');
@@ -400,13 +403,13 @@
             currentBase64Array = []; 
             document.getElementById('previewContainer').innerHTML = ''; 
             if (loadingInterval) clearInterval(loadingInterval);
-            history.pushState({view: 'home'}, '', '#home'); // 這裡也加上 hash
+            history.pushState({view: 'home'}, '', '#home');
             showSection('home');
             window.scrollTo(0, 0);
         }
 
         window.navigateToHistory = function() { 
-            history.pushState({view: 'history'}, '', '#history'); // 這裡也加上 hash
+            history.pushState({view: 'history'}, '', '#history');
             showSection('history');
         }
 
@@ -565,9 +568,13 @@
                 const realIdx = start + idx;
                 const img = (item.imageUrls && item.imageUrls[0]) || '';
                 const date = new Date(item.timestamp).toLocaleString();
-                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer hover:bg-gray-50 transition" onclick="window.viewHistoryItem(${realIdx})">
+                // ⭐ 新增：單筆刪除按鈕與雲端刪除呼叫
+                return `<div class="bg-white rounded-xl shadow-sm p-3 border border-gray-100 flex items-start cursor-pointer hover:bg-gray-50 transition relative group" onclick="window.viewHistoryItem(${realIdx})">
+                    <button onclick="window.deleteHistoryItem(${realIdx}, event)" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-2 z-10 transition-colors" title="刪除此紀錄">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                     <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3 flex-shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
-                    <div class="flex-grow min-w-0">
+                    <div class="flex-grow min-w-0 pr-8">
                         <div class="font-bold text-gray-800 line-clamp-2 break-words mb-1">${item.productName}</div>
                         <div class="text-xs text-gray-400">${date}</div>
                     </div>
@@ -584,6 +591,38 @@
             }
         }
 
+        // ⭐ 新增：單筆刪除功能 (含雲端刪除)
+        window.deleteHistoryItem = async function(index, event) {
+            event.stopPropagation();
+            if(!confirm("確定要永久刪除這筆紀錄嗎？(包含雲端檔案)")) return;
+
+            const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const item = savedHistory[index];
+            
+            // 變更按鈕圖示為 loading
+            const btn = event.currentTarget;
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-gray-400"></i>';
+            btn.disabled = true;
+
+            try {
+                // 呼叫雲端刪除 (不論成功與否都刪除本地，避免卡住)
+                await callGAS('delete', { timestamp: item.timestamp });
+            } catch(e) {
+                console.error("雲端刪除失敗", e);
+            }
+
+            // 刪除本地
+            savedHistory.splice(index, 1);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedHistory));
+            
+            // 如果當前頁面變空了，往前跳一頁
+            const totalPages = Math.ceil(savedHistory.length / itemsPerPage);
+            if (currentPage > totalPages && currentPage > 1) currentPage--;
+            
+            renderHistoryList();
+        }
+
         window.changePage = function(delta) {
             currentPage += delta;
             renderHistoryList();
@@ -594,14 +633,14 @@
             const savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             if (savedHistory[idx]) {
                 currentBase64Array = []; 
-                history.pushState({view: 'result'}, '', '#result');
+                window.history.pushState({view: 'result'}, '', '#result');
                 showSection('result');
                 renderResult(savedHistory[idx], true);
             }
         }
 
         window.clearHistory = function() {
-            if(confirm("確定清空？")) { localStorage.removeItem(STORAGE_KEY); currentPage = 1; renderHistoryList(); }
+            if(confirm("確定清空？(僅清空本機)")) { localStorage.removeItem(STORAGE_KEY); currentPage = 1; renderHistoryList(); }
         }
 
         window.syncHistoryFromServer = async function() {
