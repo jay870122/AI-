@@ -17,9 +17,8 @@
         .chat-loader:nth-child(1) { animation-delay: -0.32s; }
         .chat-loader:nth-child(2) { animation-delay: -0.16s; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes chat-dot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-        /* 強制顯示樣式，確保 Lightbox 正常運作 */
-        #imageModal { z-index: 9999 !important; }
+        /* 確保 Lightbox 的層級最高，並且滑鼠游標正確 */
+        #imageModal { z-index: 2147483647 !important; } 
         .cursor-pointer { cursor: pointer; }
     </style>
 </head>
@@ -31,7 +30,7 @@
                 <button onclick="navigateToHistory()" class="text-white/90 hover:text-white transition p-1" title="歷史紀錄"><i class="fas fa-history text-lg"></i></button>
                 <h1 class="text-xl font-bold">AI 產品拍立解</h1>
             </div>
-            <button onclick="resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full hover:bg-blue-800 transition"><i class="fas fa-redo"></i> 重來</button>
+            <button onclick="window.resetApp()" class="text-sm bg-blue-700 px-3 py-1 rounded-full hover:bg-blue-800 transition"><i class="fas fa-redo"></i> 重來</button>
         </div>
     </header>
 
@@ -51,7 +50,7 @@
                         <i class="fas fa-camera text-2xl"></i>
                         <span class="text-sm">立即拍照</span>
                     </div>
-                    <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
+                    <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="window.handleFileSelect(event)">
                 </label>
 
                 <label class="flex-1 cursor-pointer">
@@ -59,7 +58,7 @@
                         <i class="fas fa-images text-2xl"></i>
                         <span class="text-sm">從相簿選</span>
                     </div>
-                    <input type="file" accept="image/*" multiple class="hidden" onchange="handleFileSelect(event)">
+                    <input type="file" accept="image/*" multiple class="hidden" onchange="window.handleFileSelect(event)">
                 </label>
             </div>
         </div>
@@ -75,7 +74,7 @@
                 <button onclick="document.getElementById('fileInput').click()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-300 active:scale-95 transition-all flex items-center justify-center gap-2">
                     <i class="fas fa-plus"></i> 加拍
                 </button>
-                <button id="analyzeBtn" onclick="analyzeImage()" class="flex-[2] bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
+                <button id="analyzeBtn" onclick="window.analyzeImage()" class="flex-[2] bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
                     <i class="fas fa-sparkles"></i> 開始分析
                 </button>
             </div>
@@ -128,7 +127,7 @@
         <div id="historySection" class="hidden animate-fade-in">
             <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-clock mr-2 text-blue-500"></i>分析紀錄</h2>
-                <button onclick="clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50 transition">清空紀錄</button>
+                <button onclick="window.clearHistory()" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50 transition">清空紀錄</button>
             </div>
             <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-100">
                 <div class="flex justify-between items-center mb-2">
@@ -137,27 +136,27 @@
                         <span id="displayUserId" class="font-mono font-bold text-base truncate block max-w-[150px]">...</span>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="copyShareLink()" class="flex-shrink-0 bg-white text-blue-600 border border-blue-200 px-2 py-1.5 rounded-lg shadow-sm hover:bg-blue-50 transition" title="複製連結"><i class="fas fa-link"></i></button>
-                        <button onclick="switchUser()" class="flex-shrink-0 bg-white text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-100 transition active:scale-95"><i class="fas fa-exchange-alt mr-1"></i>切換</button>
+                        <button onclick="window.copyShareLink()" class="flex-shrink-0 bg-white text-blue-600 border border-blue-200 px-2 py-1.5 rounded-lg shadow-sm hover:bg-blue-50 transition" title="複製連結"><i class="fas fa-link"></i></button>
+                        <button onclick="window.switchUser()" class="flex-shrink-0 bg-white text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-100 transition active:scale-95"><i class="fas fa-exchange-alt mr-1"></i>切換</button>
                     </div>
                 </div>
                 <div class="text-xs text-blue-400"><i class="fas fa-info-circle mr-1"></i>分享連結範例：<br><span id="shareLinkExample" class="select-all bg-blue-100/50 px-1 rounded">...</span></div>
             </div>
             <div id="historyList" class="space-y-3 pb-10"></div>
-            <button onclick="resetApp()" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl mt-4">返回首頁</button>
+            <button onclick="window.resetApp()" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl mt-4">返回首頁</button>
         </div>
     </main>
 
-    <div id="imageModal" class="fixed inset-0 hidden bg-black/95 flex items-center justify-center p-2 backdrop-blur-sm transition-opacity opacity-0" onclick="closeImageModal()">
-        <button onclick="closeImageModal()" class="absolute top-4 right-4 z-[10000] text-white bg-gray-800/50 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center transition-colors">
+    <div id="imageModal" style="display: none;" class="fixed inset-0 bg-black/95 items-center justify-center p-2 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeImageModal()">
+        <button onclick="window.closeImageModal()" class="absolute top-4 right-4 z-[10000] text-white bg-gray-800/50 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center transition-colors">
             <i class="fas fa-times text-2xl"></i>
         </button>
         <img id="modalImage" class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl scale-95 transition-transform duration-200" src="" alt="Full size" onclick="event.stopPropagation()">
     </div>
     
-    <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeInstallModal()">
+    <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="window.closeInstallModal()">
         <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative" onclick="event.stopPropagation()">
-            <button onclick="closeInstallModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="window.closeInstallModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             <div class="text-center">
                 <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl"><i class="fas fa-mobile-alt"></i></div>
                 <h3 class="text-xl font-bold text-gray-800 mb-2">安裝到手機桌面</h3>
@@ -175,65 +174,86 @@
         // ============================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec"; 
 
+        // 全域變數
         let currentBase64Array = []; 
         let loadingInterval = null;
         let currentProductContext = {}; 
         const STORAGE_KEY = 'ai_product_history_v2'; 
         const USER_ID_KEY = 'ai_product_user_id';
         
-        // 網址參數解析
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlUserId = urlParams.get('uid');
+        // 確保 DOM 載入後執行初始化
+        window.addEventListener('DOMContentLoaded', () => {
+             // 網址參數解析
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUserId = urlParams.get('uid');
 
-        let userId;
-        let shouldSync = false;
+            let userId;
+            let shouldSync = false;
 
-        if (urlUserId && urlUserId.trim() !== "") {
-            userId = urlUserId.replace(/[<>"'/\\`]/g, '');
-            localStorage.setItem(USER_ID_KEY, userId);
-            shouldSync = true;
-        } else {
-            userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
-            localStorage.setItem(USER_ID_KEY, userId);
-        }
-        
-        // DOM Elements
-        const uploadSection = document.getElementById('uploadSection');
-        const previewSection = document.getElementById('previewSection');
-        const previewContainer = document.getElementById('previewContainer');
-        const loadingSection = document.getElementById('loadingSection');
-        const resultSection = document.getElementById('resultSection');
-        const historySection = document.getElementById('historySection'); 
-        const saveStatusMsg = document.getElementById('saveStatusMsg');
-        const resultImageContainer = document.getElementById('resultImageContainer');
-        const displayUserId = document.getElementById('displayUserId');
-        const homeUserId = document.getElementById('homeUserId'); 
-        const shareLinkExample = document.getElementById('shareLinkExample');
-        const historyBackBtn = document.getElementById('historyBackBtn'); 
-        const imageModal = document.getElementById('imageModal');
-        const modalImage = document.getElementById('modalImage');
-        const installModal = document.getElementById('installModal');
-        const chatHistory = document.getElementById('chatHistory');
-        const chatInput = document.getElementById('chatInput');
-        const sendChatBtn = document.getElementById('sendChatBtn');
-        const fileInput = document.getElementById('fileInput'); 
-        
+            if (urlUserId && urlUserId.trim() !== "") {
+                userId = urlUserId.replace(/[<>"'/\\`]/g, '');
+                localStorage.setItem(USER_ID_KEY, userId);
+                shouldSync = true;
+            } else {
+                userId = localStorage.getItem(USER_ID_KEY) || 'user_' + Math.random().toString(36).substr(2, 6);
+                localStorage.setItem(USER_ID_KEY, userId);
+            }
+            window.userId = userId; // 全域
+
+            updateUserInfoDisplay();
+            if (shouldSync) setTimeout(window.syncHistoryFromServer, 500);
+        });
+
         const loadingSteps = ["處理多張影像...", "呼叫 AI 大腦...", "綜合分析成分...", "正在存入您的專屬雲端..."];
 
-        updateUserInfoDisplay();
-        if (shouldSync) setTimeout(syncHistoryFromServer, 500);
-
-        window.addEventListener('popstate', function(event) {
-            if (event.state && event.state.view === 'history') {
-                showHistory(false); 
-            } else if (!event.state || event.state.view === 'home') {
-                if (!previewSection.classList.contains('hidden') && currentBase64Array.length > 0) {
-                    // Do nothing
-                } else {
-                    resetApp(false); 
-                }
+        // ============================================
+        //  圖片放大功能 (強制全域註冊)
+        // ============================================
+        window.openImageModal = function(src) {
+            console.log("嘗試開啟圖片:", src ? "有圖片連結" : "無連結");
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            
+            if (!modal || !img) {
+                console.error("找不到 Modal 元素");
+                return;
             }
-        });
+            
+            img.src = src; 
+            
+            // 強制設定樣式，不依賴 Tailwind class
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden'); 
+            
+            // 動畫
+            setTimeout(() => { 
+                modal.classList.remove('opacity-0'); 
+                img.classList.remove('scale-95'); 
+                img.classList.add('scale-100'); 
+            }, 10); 
+            
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        window.closeImageModal = function() { 
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            
+            if (!modal) return;
+
+            modal.classList.add('opacity-0'); 
+            if(img) {
+                img.classList.remove('scale-100'); 
+                img.classList.add('scale-95'); 
+            }
+            
+            setTimeout(() => { 
+                modal.style.display = 'none'; // 強制隱藏
+                modal.classList.add('hidden'); 
+                if(img) img.src = ''; 
+                document.body.style.overflow = ''; 
+            }, 200); 
+        }
 
         // ============================================
         //  API 呼叫函式
@@ -246,7 +266,7 @@
 
             const body = JSON.stringify({
                 action: action,
-                userId: userId,
+                userId: window.userId,
                 ...payload
             });
 
@@ -262,20 +282,27 @@
         }
 
         // ============================================
-        //  邏輯函式
+        //  邏輯函式 (全部掛載到 window)
         // ============================================
 
-        function updateUserInfoDisplay() {
-            if (displayUserId) displayUserId.innerText = userId;
-            if (homeUserId) homeUserId.innerText = userId;
+        window.updateUserInfoDisplay = function() {
+            const displayUserId = document.getElementById('displayUserId');
+            const homeUserId = document.getElementById('homeUserId'); 
+            const shareLinkExample = document.getElementById('shareLinkExample');
+            
+            if (displayUserId) displayUserId.innerText = window.userId;
+            if (homeUserId) homeUserId.innerText = window.userId;
             const currentUrl = window.location.href.split('?')[0];
-            if (shareLinkExample) shareLinkExample.innerText = currentUrl + '?uid=' + userId;
+            if (shareLinkExample) shareLinkExample.innerText = currentUrl + '?uid=' + window.userId;
         }
 
-        async function handleFileSelect(event) {
+        window.handleFileSelect = async function(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
+            const previewContainer = document.getElementById('previewContainer');
+            
+            // 讀取檔案
             const promises = Array.from(files).map(file => {
                 return new Promise((resolve) => {
                     const reader = new FileReader();
@@ -307,13 +334,11 @@
                 const div = document.createElement('div');
                 div.className = "flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 border-white shadow-sm snap-center relative bg-gray-200";
                 
-                // 修正：使用 addEventListener，保證圖片可點擊放大
                 const img = document.createElement('img');
                 img.src = base64;
+                // 這裡直接使用 window.openImageModal
+                img.onclick = function() { window.openImageModal(base64); };
                 img.className = "w-full h-full object-cover cursor-pointer";
-                img.addEventListener('click', function() {
-                    openImageModal(base64);
-                });
                 
                 const badge = document.createElement('div');
                 badge.className = "absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded-full pointer-events-none";
@@ -327,50 +352,50 @@
             setTimeout(() => { previewContainer.scrollLeft = previewContainer.scrollWidth; }, 100);
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
 
-            historySection.classList.add('hidden');
-            uploadSection.classList.add('hidden');
-            previewSection.classList.remove('hidden');
-            resultSection.classList.add('hidden');
+            document.getElementById('historySection').classList.add('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('previewSection').classList.remove('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
         }
 
-        function resetApp(pushState = true) {
+        window.resetApp = function(pushState = true) {
             if (pushState) window.history.pushState({view: 'home'}, '', window.location.pathname);
             
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
             currentBase64Array = []; 
-            previewContainer.innerHTML = ''; 
+            document.getElementById('previewContainer').innerHTML = ''; 
             if (loadingInterval) clearInterval(loadingInterval);
             
-            uploadSection.classList.remove('hidden');
-            previewSection.classList.add('hidden');
-            loadingSection.classList.add('hidden');
-            loadingSection.style.display = '';
-            resultSection.classList.add('hidden');
-            historySection.classList.add('hidden'); 
-            saveStatusMsg.classList.add('hidden');
+            document.getElementById('uploadSection').classList.remove('hidden');
+            document.getElementById('previewSection').classList.add('hidden');
+            document.getElementById('loadingSection').classList.add('hidden');
+            document.getElementById('loadingSection').style.display = '';
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('historySection').classList.add('hidden'); 
+            document.getElementById('saveStatusMsg').classList.add('hidden');
             window.scrollTo(0, 0);
         }
 
-        function navigateToHistory() { showHistory(true); }
+        window.navigateToHistory = function() { window.showHistory(true); }
 
-        function showHistory(pushState = true) {
+        window.showHistory = function(pushState = true) {
             if (pushState) window.history.pushState({view: 'history'}, '', '#history');
-            uploadSection.classList.add('hidden');
-            previewSection.classList.add('hidden');
-            loadingSection.classList.add('hidden');
-            loadingSection.style.display = '';
-            resultSection.classList.add('hidden');
-            historySection.classList.remove('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('previewSection').classList.add('hidden');
+            document.getElementById('loadingSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('historySection').classList.remove('hidden');
             renderHistoryList();
             window.scrollTo(0, 0);
         }
 
-        async function analyzeImage() {
+        window.analyzeImage = async function() {
             if (currentBase64Array.length === 0) return;
             
-            previewSection.classList.add('hidden');
-            loadingSection.classList.remove('hidden');
-            loadingSection.style.display = 'flex';
+            document.getElementById('previewSection').classList.add('hidden');
+            document.getElementById('loadingSection').classList.remove('hidden');
+            document.getElementById('loadingSection').style.display = 'flex';
+            
             let stepIndex = 0;
             if (loadingInterval) clearInterval(loadingInterval);
             loadingInterval = setInterval(function() {
@@ -390,24 +415,25 @@
             }
         }
 
-        function handleAnalysisError(error) {
+        window.handleAnalysisError = function(error) {
             if (loadingInterval) clearInterval(loadingInterval);
             alert("分析發生錯誤：" + error.message + "\n\n不用擔心，照片還在！請檢查網路後再試一次按鈕。");
-            loadingSection.classList.add('hidden');
-            previewSection.classList.remove('hidden'); 
-            resultSection.classList.add('hidden');
+            document.getElementById('loadingSection').classList.add('hidden');
+            document.getElementById('previewSection').classList.remove('hidden'); 
+            document.getElementById('resultSection').classList.add('hidden');
         }
 
-        function renderResult(data, fromHistory = false) {
+        window.renderResult = function(data, fromHistory = false) {
             currentProductContext = { productName: data.productName, translation: data.translation, explanation: data.explanation };
+            const chatHistory = document.getElementById('chatHistory');
             chatHistory.innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">對這個產品還有疑問嗎？例如成分、熱量或是使用方法？歡迎隨時問我！</div></div>';
 
-            loadingSection.classList.add('hidden');
-            loadingSection.style.display = '';
-            resultSection.classList.remove('hidden');
-            historySection.classList.add('hidden'); 
-            uploadSection.classList.add('hidden'); 
+            document.getElementById('loadingSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+            document.getElementById('historySection').classList.add('hidden'); 
+            document.getElementById('uploadSection').classList.add('hidden'); 
 
+            const historyBackBtn = document.getElementById('historyBackBtn');
             if (fromHistory) { historyBackBtn.classList.remove('hidden'); } else { historyBackBtn.classList.add('hidden'); }
 
             document.getElementById('resName').innerText = data.productName || "未知產品";
@@ -423,11 +449,12 @@
                 images = [data.imageUrl];
             }
 
+            const resultImageContainer = document.getElementById('resultImageContainer');
             resultImageContainer.innerHTML = '';
             
             if (images.length > 0) {
                 resultImageContainer.className = "flex overflow-x-auto space-x-3 pb-2 hide-scrollbar snap-x mb-4"; 
-                resultImageContainer.classList.remove('hidden', 'rounded-xl', 'overflow-hidden', 'shadow-sm', 'border', 'border-gray-200', 'bg-gray-50', 'relative', 'group');
+                resultImageContainer.classList.remove('hidden');
 
                 images.forEach((src, index) => {
                     const div = document.createElement('div');
@@ -437,13 +464,11 @@
                         div.className = "w-64 h-64 rounded-lg overflow-hidden border border-gray-200 shadow-sm snap-center relative bg-white flex-shrink-0";
                     }
                     
-                    // 修正：使用 addEventListener 確保結果頁面的圖片也能點擊
                     const img = document.createElement('img');
                     img.src = src;
                     img.className = "w-full h-full object-cover cursor-pointer";
-                    img.addEventListener('click', function() {
-                        openImageModal(src);
-                    });
+                    // 這裡也直接使用 window.openImageModal
+                    img.onclick = function() { window.openImageModal(src); };
                     
                     div.appendChild(img);
                     
@@ -454,11 +479,11 @@
                     }
                     resultImageContainer.appendChild(div);
                 });
-                resultImageContainer.classList.remove('hidden');
             } else {
                 resultImageContainer.classList.add('hidden');
             }
 
+            const saveStatusMsg = document.getElementById('saveStatusMsg');
             saveStatusMsg.className = "hidden p-3 rounded-lg text-sm mb-4";
             if (data.saveSuccess) {
                 saveStatusMsg.innerHTML = '<i class="fas fa-check-circle mr-1"></i> 已儲存至您的專屬資料夾！';
@@ -471,9 +496,11 @@
             setTimeout(function() { window.scrollTo({ top: 0, behavior: 'auto' }); }, 50);
         }
 
-        function handleChatKey(e) { if(e.key === 'Enter') sendChatMessage(); }
+        window.handleChatKey = function(e) { if(e.key === 'Enter') window.sendChatMessage(); }
 
-        async function sendChatMessage() {
+        window.sendChatMessage = async function() {
+            const chatInput = document.getElementById('chatInput');
+            const chatHistory = document.getElementById('chatHistory');
             const question = chatInput.value.trim();
             if (!question) return;
 
@@ -508,7 +535,7 @@
             }
         }
 
-        function saveToHistory(data) {
+        window.saveToHistory = function(data) {
             try {
                 const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
                 const newItem = { 
@@ -526,7 +553,7 @@
             } catch (e) { console.error("儲存失敗", e); }
         }
 
-        function renderHistoryList() {
+        window.renderHistoryList = function() {
             const listEl = document.getElementById('historyList');
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             
@@ -543,42 +570,42 @@
                     ? '<div class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden mr-3 relative"><img src="' + firstImage + '" class="w-full h-full object-cover">' + countBadge + '</div>'
                     : '<div class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center mr-3 text-gray-400"><i class="fas fa-image"></i></div>';
 
-                return '<div class="history-card bg-white rounded-xl shadow-sm p-3 border border-gray-100 cursor-pointer transition flex items-start" onclick="viewHistoryItem(' + index + ')">' + imgHtml + '<div class="flex-grow min-w-0"><div class="flex justify-between items-start mb-1"><h3 class="font-bold text-gray-800 text-md truncate pr-2">' + (item.productName || '未知產品') + '</h3><span class="text-xs text-gray-400 whitespace-nowrap">' + dateStr + '</span></div><p class="text-sm text-gray-500 line-clamp-2">' + (item.explanation || '無說明') + '</p></div></div>';
+                return '<div class="history-card bg-white rounded-xl shadow-sm p-3 border border-gray-100 cursor-pointer transition flex items-start" onclick="window.viewHistoryItem(' + index + ')">' + imgHtml + '<div class="flex-grow min-w-0"><div class="flex justify-between items-start mb-1"><h3 class="font-bold text-gray-800 text-md truncate pr-2">' + (item.productName || '未知產品') + '</h3><span class="text-xs text-gray-400 whitespace-nowrap">' + dateStr + '</span></div><p class="text-sm text-gray-500 line-clamp-2">' + (item.explanation || '無說明') + '</p></div></div>';
             }).join('');
         }
 
-        function viewHistoryItem(index) {
+        window.viewHistoryItem = function(index) {
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             const item = history[index];
             if (item) {
                 currentBase64Array = []; 
                 window.history.pushState({view: 'item'}, '', '#item');
                 renderResult(item, true); 
-                saveStatusMsg.classList.add('hidden'); 
+                document.getElementById('saveStatusMsg').classList.add('hidden'); 
             }
         }
 
-        function clearHistory() { if (confirm("確定要清空本地紀錄嗎？(雲端資料不會刪除)")) { localStorage.removeItem(STORAGE_KEY); renderHistoryList(); } }
+        window.clearHistory = function() { if (confirm("確定要清空本地紀錄嗎？(雲端資料不會刪除)")) { localStorage.removeItem(STORAGE_KEY); renderHistoryList(); } }
 
-        async function syncHistoryFromServer() {
+        window.syncHistoryFromServer = async function() {
             console.log("正在同步資料...");
             try {
                 const serverHistory = await callGAS('getHistory', {});
                 if (serverHistory && serverHistory.length > 0) {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(serverHistory));
-                    if (!historySection.classList.contains('hidden')) { renderHistoryList(); }
+                    if (!document.getElementById('historySection').classList.contains('hidden')) { renderHistoryList(); }
                 }
             } catch (e) {
                 console.error("同步失敗", e);
             }
         }
 
-        async function switchUser() {
-            const newId = prompt("請輸入帳號 ID (建議設為 Mom, Me 等簡單名稱)\n\n若該 ID 已有雲端紀錄，將自動同步。", userId);
+        window.switchUser = async function() {
+            const newId = prompt("請輸入帳號 ID (建議設為 Mom, Me 等簡單名稱)\n\n若該 ID 已有雲端紀錄，將自動同步。", window.userId);
             if (newId && newId.trim() !== "") {
                 if (confirm("即將切換至帳號: " + newId + "\n這將會清除目前的畫面並從雲端載入該帳號的紀錄。")) {
-                    userId = newId.trim(); 
-                    localStorage.setItem(USER_ID_KEY, userId); 
+                    window.userId = newId.trim(); 
+                    localStorage.setItem(USER_ID_KEY, window.userId); 
                     updateUserInfoDisplay();
                     document.getElementById('historyList').innerHTML = '<div class="text-center py-10"><div class="loader mx-auto mb-2"></div><p class="text-gray-400">正在雲端同步資料...</p></div>';
                     
@@ -601,53 +628,14 @@
             }
         }
 
-        function copyShareLink() {
+        window.copyShareLink = function() {
             const currentUrl = window.location.href.split('?')[0];
-            const shareUrl = currentUrl + '?uid=' + userId;
+            const shareUrl = currentUrl + '?uid=' + window.userId;
             const el = document.createElement('textarea'); el.value = shareUrl; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             alert("連結已複製！\n您可以將此連結傳給他人，對方開啟後將會自動登入此帳號。");
         }
 
-        // 修改：使用更穩定的 Lightbox 開啟邏輯
-        function openImageModal(src) { 
-            const modal = document.getElementById('imageModal');
-            const img = document.getElementById('modalImage');
-            
-            if (!modal || !img) return;
-            
-            img.src = src; 
-            modal.classList.remove('hidden'); 
-            modal.style.display = 'flex'; // 強制使用 Flex 排版
-            
-            // 延遲一點點再加動畫，確保 CSS transition 運作
-            setTimeout(() => { 
-                modal.classList.remove('opacity-0'); 
-                img.classList.remove('scale-95'); 
-                img.classList.add('scale-100'); 
-            }, 10); 
-            
-            document.body.style.overflow = 'hidden'; 
-        }
-
-        function closeImageModal() { 
-            const modal = document.getElementById('imageModal');
-            const img = document.getElementById('modalImage');
-            
-            if (!modal || !img) return;
-
-            modal.classList.add('opacity-0'); 
-            img.classList.remove('scale-100'); 
-            img.classList.add('scale-95'); 
-            
-            setTimeout(() => { 
-                modal.classList.add('hidden'); 
-                modal.style.display = 'none'; // 隱藏
-                img.src = ''; 
-                document.body.style.overflow = ''; 
-            }, 200); 
-        }
-
-        function showInstallPrompt() {
+        window.showInstallPrompt = function() {
             const ua = navigator.userAgent.toLowerCase();
             const isIOS = /iphone|ipad|ipod/.test(ua); const isAndroid = /android/.test(ua);
             if (isIOS) { document.getElementById('iosInstall').classList.remove('hidden'); }
@@ -655,7 +643,8 @@
             else { document.getElementById('pcInstall').classList.remove('hidden'); }
             installModal.classList.remove('hidden'); requestAnimationFrame(() => { installModal.classList.remove('opacity-0'); });
         }
-        function closeInstallModal() { installModal.classList.add('opacity-0'); setTimeout(() => { installModal.classList.add('hidden'); document.getElementById('iosInstall').classList.add('hidden'); document.getElementById('androidInstall').classList.add('hidden'); document.getElementById('pcInstall').classList.add('hidden'); }, 200); }
+        window.closeInstallModal = function() { installModal.classList.add('opacity-0'); setTimeout(() => { installModal.classList.add('hidden'); document.getElementById('iosInstall').classList.add('hidden'); document.getElementById('androidInstall').classList.add('hidden'); document.getElementById('pcInstall').classList.add('hidden'); }, 200); }
+
     </script>
 </body>
 </html>
