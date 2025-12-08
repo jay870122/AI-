@@ -159,11 +159,11 @@
        </div>
     </div>
 
-    <script>
+<script>
         // ============================================
-        // ⚠️ 重要：請在這裡填入你的 GAS 網頁應用程式網址
+        // ⚠️ 請在這裡填入你的 GAS 網頁應用程式網址
         // ============================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/execc"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwxJpMdE7vgn__dFK85O017ruKczfVUn2-o91H9C1YOuRzVeSqUTV0hJvYxlRfcF4G9/exec"; 
 
         let currentBase64Array = []; 
         let loadingInterval = null;
@@ -205,6 +205,7 @@
         const installModal = document.getElementById('installModal');
         const chatHistory = document.getElementById('chatHistory');
         const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
         const fileInput = document.getElementById('fileInput'); 
         
         const loadingSteps = ["處理多張影像...", "呼叫 AI 大腦...", "綜合分析成分...", "正在存入您的專屬雲端..."];
@@ -225,13 +226,12 @@
             }
         });
 
-// ============================================
-        //  API 呼叫函式 (請用這段覆蓋舊的)
+        // ============================================
+        //  API 呼叫函式 (已修復 async/await)
         // ============================================
         async function callGAS(action, payload) {
-            // 檢查是否已設定網址
-            if(!GAS_API_URL || GAS_API_URL.includes("你的-deployment-id")) {
-                alert("請先修改 index.html 中的 GAS_API_URL 為您自己的 GAS 部署網址！");
+            if(!GAS_API_URL || GAS_API_URL.includes("你的-DEPLOYMENT-ID")) {
+                alert("請先在程式碼中設定正確的 GAS_API_URL！");
                 throw new Error("API URL not set");
             }
 
@@ -242,7 +242,6 @@
             });
 
             // 使用 POST 發送純文字 (text/plain) 以避免 CORS Preflight 問題
-            // ⚠️ 錯誤原因：這一行用了 await，所以函式開頭一定要有 async
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: body,
@@ -257,20 +256,18 @@
         }
 
         // ============================================
-        //  邏輯函式 (大部分邏輯相同，僅修改 API 呼叫處)
+        //  邏輯函式
         // ============================================
 
         function updateUserInfoDisplay() {
             if (displayUserId) displayUserId.innerText = userId;
             if (homeUserId) homeUserId.innerText = userId;
-            // 更新分享連結，現在是目前頁面的網址
             const currentUrl = window.location.href.split('?')[0];
             if (shareLinkExample) shareLinkExample.innerText = currentUrl + '?uid=' + userId;
         }
 
         async function handleFileSelect(event) {
-             // ... 這裡完全不用改，直接複製原本的 ...
-             const files = event.target.files;
+            const files = event.target.files;
             if (!files || files.length === 0) return;
 
             const promises = Array.from(files).map(file => {
@@ -321,8 +318,7 @@
         }
 
         function resetApp(pushState = true) {
-            // ... 這裡完全不用改 ...
-            if (pushState) window.history.pushState({view: 'home'}, '', window.location.pathname); // Clean URL
+            if (pushState) window.history.pushState({view: 'home'}, '', window.location.pathname); 
             
             document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
             currentBase64Array = []; 
@@ -342,7 +338,6 @@
         function navigateToHistory() { showHistory(true); }
 
         function showHistory(pushState = true) {
-            // ... 這裡完全不用改 ...
             if (pushState) window.history.pushState({view: 'history'}, '', '#history');
             uploadSection.classList.add('hidden');
             previewSection.classList.add('hidden');
@@ -354,9 +349,6 @@
             window.scrollTo(0, 0);
         }
 
-        // ============================
-        // 重點修改：分析圖片
-        // ============================
         async function analyzeImage() {
             if (currentBase64Array.length === 0) return;
             
@@ -374,7 +366,6 @@
             const base64List = currentBase64Array.map(b => b.split(',')[1]);
             
             try {
-                // 改用 fetch 呼叫 GAS
                 const result = await callGAS('analyze', { base64DataList: base64List });
                 
                 if (loadingInterval) clearInterval(loadingInterval);
@@ -387,7 +378,6 @@
         }
 
         function handleAnalysisError(error) {
-            // ... 不用改 ...
             if (loadingInterval) clearInterval(loadingInterval);
             alert("分析發生錯誤：" + error.message + "\n\n不用擔心，照片還在！請檢查網路後再試一次按鈕。");
             loadingSection.classList.add('hidden');
@@ -396,9 +386,6 @@
         }
 
         function renderResult(data, fromHistory = false) {
-             // ... 這裡完全不用改 ...
-             // 把原本 renderResult 的內容全部貼過來
-             // 為了版面整潔，我這裡省略細節，請直接使用你原本的 JS
             currentProductContext = { productName: data.productName, translation: data.translation, explanation: data.explanation };
             chatHistory.innerHTML = '<div class="flex gap-2"><div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot"></i></div><div class="bg-white p-3 rounded-r-xl rounded-bl-xl shadow-sm text-gray-700 border border-gray-100">對這個產品還有疑問嗎？例如成分、熱量或是使用方法？歡迎隨時問我！</div></div>';
 
@@ -462,9 +449,6 @@
             setTimeout(function() { window.scrollTo({ top: 0, behavior: 'auto' }); }, 50);
         }
 
-        // ============================
-        // 重點修改：AI 對話
-        // ============================
         function handleChatKey(e) { if(e.key === 'Enter') sendChatMessage(); }
 
         async function sendChatMessage() {
@@ -484,7 +468,6 @@
             const imagesDataToSend = currentBase64Array.length > 0 ? currentBase64Array.map(b => b.split(',')[1]) : null;
 
             try {
-                // 改用 fetch 呼叫 GAS
                 const response = await callGAS('chat', { 
                     question: question,
                     productContext: currentProductContext,
@@ -504,7 +487,6 @@
         }
 
         function saveToHistory(data) {
-             // ... 內容同原本 ...
             try {
                 const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
                 const newItem = { 
@@ -523,7 +505,6 @@
         }
 
         function renderHistoryList() {
-             // ... 內容同原本 ...
             const listEl = document.getElementById('historyList');
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             
@@ -545,7 +526,6 @@
         }
 
         function viewHistoryItem(index) {
-             // ... 內容同原本 ...
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             const item = history[index];
             if (item) {
@@ -558,13 +538,9 @@
 
         function clearHistory() { if (confirm("確定要清空本地紀錄嗎？(雲端資料不會刪除)")) { localStorage.removeItem(STORAGE_KEY); renderHistoryList(); } }
 
-        // ============================
-        // 重點修改：同步歷史紀錄
-        // ============================
         async function syncHistoryFromServer() {
             console.log("正在同步資料...");
             try {
-                // 改用 fetch 呼叫 GAS
                 const serverHistory = await callGAS('getHistory', {});
                 
                 if (serverHistory && serverHistory.length > 0) {
@@ -606,14 +582,12 @@
         }
 
         function copyShareLink() {
-            // 更新：複製的是目前的網頁網址
             const currentUrl = window.location.href.split('?')[0];
             const shareUrl = currentUrl + '?uid=' + userId;
             const el = document.createElement('textarea'); el.value = shareUrl; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             alert("連結已複製！\n您可以將此連結傳給他人，對方開啟後將會自動登入此帳號。");
         }
 
-        // Modal 與 Install 相關 (同原本)
         function openImageModal(src) { modalImage.src = src; imageModal.classList.remove('hidden'); requestAnimationFrame(() => { imageModal.classList.remove('opacity-0'); modalImage.classList.remove('scale-95'); modalImage.classList.add('scale-100'); }); document.body.style.overflow = 'hidden'; }
         function closeImageModal() { imageModal.classList.add('opacity-0'); modalImage.classList.remove('scale-100'); modalImage.classList.add('scale-95'); setTimeout(() => { imageModal.classList.add('hidden'); modalImage.src = ''; document.body.style.overflow = ''; }, 200); }
         function showInstallPrompt() {
