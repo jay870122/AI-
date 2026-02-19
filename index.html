@@ -284,22 +284,31 @@
                 showSection('home');
             }
 
-            window.onpopstate = function(event) {
-                if (event.state) {
-                    if (event.state.view === 'history') showSection('history');
-                    else if (event.state.view === 'home') showSection('home');
-                    else if (event.state.view === 'result') {
-                        const resSection = document.getElementById('resultSection');
-                        const hasContent = document.getElementById('resName').innerText !== "";
-                        if (hasContent) showSection('result');
-                        else showSection('home');
-                    }
-                } else {
-                    const hash = window.location.hash;
-                    if(hash === '#history') showSection('history');
-                    else showSection('home');
-                }
-            };
+window.onpopstate = function(event) {
+    // ⭐ 新增：優先檢查圖片彈出視窗是否正開啟著
+    const modal = document.getElementById('imageModal');
+    // 如果 Modal 是打開的狀態 (display 不為 none)
+    if (modal && modal.style.display !== 'none') {
+        window.executeCloseModal(); // 執行關閉動畫
+        return; // 結束執行，不要切換底下的頁面
+    }
+
+    // --- 以下為原本的頁面切換邏輯 ---
+    if (event.state) {
+        if (event.state.view === 'history') showSection('history');
+        else if (event.state.view === 'home') showSection('home');
+        else if (event.state.view === 'result') {
+            const resSection = document.getElementById('resultSection');
+            const hasContent = document.getElementById('resName').innerText !== "";
+            if (hasContent) showSection('result');
+            else showSection('home');
+        }
+    } else {
+        const hash = window.location.hash;
+        if(hash === '#history') showSection('history');
+        else showSection('home');
+    }
+};
         });
 
         function showSection(sectionName) {
@@ -464,18 +473,50 @@
             }
         }
 
-        window.openImageModal = function(src) {
-            const modal = document.getElementById('imageModal');
-            const img = document.getElementById('modalImage');
-            if (!modal || !img) return;
-            img.src = src; 
-            modal.style.display = 'flex';
-            void modal.offsetWidth; 
-            modal.classList.remove('opacity-0');
-            img.classList.remove('scale-95');
-            img.classList.add('scale-100');
-            document.body.style.overflow = 'hidden';
-        }
+window.openImageModal = function(src) {
+    const modal = document.getElementById('imageModal');
+    const img = document.getElementById('modalImage');
+    if (!modal || !img) return;
+    img.src = src; 
+    modal.style.display = 'flex';
+    void modal.offsetWidth; 
+    modal.classList.remove('opacity-0');
+    img.classList.remove('scale-95');
+    img.classList.add('scale-100');
+    document.body.style.overflow = 'hidden';
+
+    // ⭐ 新增：開啟圖片時，推入一筆新的歷史紀錄狀態
+    history.pushState({ modalOpen: true }, '');
+}
+
+window.closeImageModal = function() { 
+    const modal = document.getElementById('imageModal');
+    
+    // ⭐ 新增防呆：如果已經在關閉中(包含 opacity-0 class)，就不要重複執行
+    if (!modal || modal.style.display === 'none' || modal.classList.contains('opacity-0')) return;
+    
+    // ⭐ 觸發上一頁。這會呼叫上方的 onpopstate 來實際執行關閉
+    history.back(); 
+}
+
+// ⭐ 新增：將原本實際控制 DOM 與關閉動畫的邏輯獨立出來
+window.executeCloseModal = function() {
+    const modal = document.getElementById('imageModal');
+    const img = document.getElementById('modalImage');
+    if (!modal) return;
+    
+    modal.classList.add('opacity-0');
+    if(img) { 
+        img.classList.remove('scale-100'); 
+        img.classList.add('scale-95'); 
+    }
+    
+    setTimeout(() => { 
+        modal.style.display = 'none'; 
+        if(img) img.src = ''; 
+        document.body.style.overflow = ''; 
+    }, 300);
+}
 
         window.closeImageModal = function() { 
             const modal = document.getElementById('imageModal');
